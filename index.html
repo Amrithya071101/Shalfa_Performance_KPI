@@ -3981,37 +3981,24 @@ async function openCreateKpiModal() {
   const modal = document.getElementById("createKpiModal");
   if (!modal) return;
   modal.classList.add("show");
-  if (!USE_STATIC_PROTOTYPE_LIST) {
-    await refreshLookupOptionCaches();
-  }
+  await refreshLookupOptionCaches();
   createFormNameLockedByUser = false;
   document.getElementById("createFormArea").value = createFormDefaults.area;
   document.getElementById("createFormContractor").value = createFormDefaults.contractor;
   document.getElementById("createFormWorkOrder").value = createFormDefaults.workOrder;
   document.getElementById("createFormProjectNumber").value = createFormDefaults.projectNumber;
-  document.getElementById("createFormLightAverage").value =
-    USE_STATIC_PROTOTYPE_LIST ? String(STATIC_PROTOTYPE_SERVICE_METRICS.SS.result) : "";
-  document.getElementById("createFormLightSize").value = "45";
-  document.getElementById("createFormDateMonth").value = toDatetimeLocalValue(
-    USE_STATIC_PROTOTYPE_LIST ? new Date(STATIC_PROTOTYPE_ROWS[0].dateMonth) : new Date()
-  );
-  if (USE_STATIC_PROTOTYPE_LIST) {
-    document.getElementById("createFormName").value = STATIC_PROTOTYPE_ROWS[0].recordName;
-  } else {
-    syncCreateFormNameFromDateArea();
-  }
+  document.getElementById("createFormDateMonth").value = toDatetimeLocalValue(new Date());
+  syncCreateFormNameFromDateArea();
   initAllServiceSubRows();
-  if (!USE_STATIC_PROTOTYPE_LIST) {
-    setCreateFormOverlay(true, "Fetching row names from modules…");
-    try {
-      if (window.facilioApp?.api?.fetchAll || window.facilioApp?.request?.invokeFacilioAPI) {
-        await prefillSubformRowNamesFromLatestModuleRows();
-      }
-    } catch (e) {
-      console.warn("prefillSubformRowNamesFromLatestModuleRows", e);
-    } finally {
-      setCreateFormOverlay(false, "");
+  setCreateFormOverlay(true, "Fetching row names from modules…");
+  try {
+    if (window.facilioApp?.api?.fetchAll || window.facilioApp?.request?.invokeFacilioAPI) {
+      await prefillSubformRowNamesFromLatestModuleRows();
     }
+  } catch (e) {
+    console.warn("prefillSubformRowNamesFromLatestModuleRows", e);
+  } finally {
+    setCreateFormOverlay(false, "");
   }
   renderAllServiceSubforms();
   bindCreateFormScrollSpy();
@@ -4556,9 +4543,7 @@ async function submitCreateKpiForm(ev) {
     [createFormFieldLinkNames.area]: document.getElementById("createFormArea").value,
     [createFormFieldLinkNames.contractor]: document.getElementById("createFormContractor").value,
     [createFormFieldLinkNames.workOrder]: document.getElementById("createFormWorkOrder").value,
-    [createFormFieldLinkNames.projectNumber]: document.getElementById("createFormProjectNumber").value,
-    [createFormFieldLinkNames.lightAverage]: safeNumber(document.getElementById("createFormLightAverage").value),
-    [createFormFieldLinkNames.lightSize]: safeNumber(document.getElementById("createFormLightSize").value)
+    [createFormFieldLinkNames.projectNumber]: document.getElementById("createFormProjectNumber").value
   };
 
   setCreateFormOverlay(true, "Saving KPI…");
@@ -4698,17 +4683,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="create-form-field">
               <label for="createFormContractor">Contractor</label>
               <input type="text" id="createFormContractor" disabled />
-            </div>
-
-            <div class="facilio-form-grid-2">
-              <div class="create-form-field">
-                <label for="createFormLightAverage">Light Average</label>
-                <input type="number" id="createFormLightAverage" placeholder="Enter decimal value" />
-              </div>
-              <div class="create-form-field">
-                <label for="createFormLightSize">Light Size</label>
-                <input type="number" id="createFormLightSize" placeholder="Input numerical value" />
-              </div>
             </div>
 
             <div class="facilio-form-grid-2">
