@@ -1,0 +1,4951 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<script src="https://static.facilio.com/apps-sdk/latest/facilio_apps_sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+<style>
+body {
+  font-family: Roboto, "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #ffffff;
+  color: #283648;
+}
+
+/* 🔷 HEADER CARD — Facilio-style neutral bar (16px title, subtle grey) */
+.header-card {
+  background: #f9fafb;
+  border: 1px solid #e2e5e9;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-left h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #283648;
+}
+
+.header-left p {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.create-form-busy-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(2px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: inherit;
+}
+
+.create-form-busy-overlay.show {
+  display: flex;
+}
+
+.create-form-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: createFormSpin 0.7s linear infinite;
+}
+
+@keyframes createFormSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.create-form-busy-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* 🔷 TABLE CARD */
+.table-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* 🔷 TOP BAR — white like Service Category list (no grey strip) */
+.table-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 🔷 TABLE — wider row + gap so performance bar does not overlap next column */
+.table-header, .table-row {
+  display: grid;
+  grid-template-columns: minmax(52px, 0.55fr) 1.05fr 1.05fr minmax(200px, 3fr) 1fr 1fr 1fr 1fr 1.15fr;
+  column-gap: 10px;
+  padding: 20px 28px;
+  align-items: center;
+}
+
+/* 🔥 prevent overflow */
+.table-row > div,
+.table-header > div,
+.performance-cell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.table-row {
+  overflow: hidden;
+}
+
+/* 🔷 HEADER STYLE — same neutral bg as module header */
+.table-header {
+  background: #f9fafb;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  letter-spacing: 0.02em;
+}
+
+.table-header > div:last-child {
+  border-right: none;
+}
+
+/* 🔷 ROW */
+.table-row {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.table-row:hover {
+  background: #f9fafb;
+}
+
+/* 🔷 CELLS — compact ID like summary header */
+.id-cell {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.table-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.table-row:hover {
+  background: #f3f4f6;
+}
+
+.table-row > div:not(.performance-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 🔷 PERFORMANCE CELL (INLINE FIX) */
+.performance-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* value */
+.perf-value {
+  flex: 0 0 auto;
+  min-width: 38px;
+  max-width: 48px;
+  font-size: 12px;
+  margin-right: 0;
+}
+
+/* progress bar */
+.progress-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  height: 11px;
+  background: #e5e7eb;
+  border-radius: 5px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  width: 100%;
+}
+
+/* KPI value colours — amber vs rose-red read more distinctly than orange vs orange-red */
+.green { color: #15803d; }
+.orange { color: #b45309; }
+.red { color: #e11d48; }
+
+.link {
+  color: #2563eb;
+}
+
+.target {
+  color: #9ca3af;
+}
+
+/* 🔷 PAGINATION RIGHT */
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* KPI numbers (light/op/heavy/contract) */
+.table-row .green,
+.table-row .orange,
+.table-row .red {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* target value grey */
+.target {
+  color: #9ca3af; /* grey */
+}
+
+/* achieved colors (list KPI columns) */
+.green { color: #15803d; }
+.orange { color: #b45309; }
+.red { color: #e11d48; }
+
+.pagination button {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+
+}
+
+/* 🔥 FULLSCREEN OVERLAY */
+.summary-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);  /* dim background */
+  z-index: 9999;
+
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+
+  overflow: hidden;
+  padding: 0;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+/* 🔥 ACTIVE STATE */
+.summary-modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 🔥 CONTENT CARD — popover-style open (fade + scale, no slide) */
+.summary-container {
+  background: #ffffff;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 14px 18px;
+  font-size: 12px;
+
+  transform: scale(0.98);
+  opacity: 0;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  transform-origin: 50% 0;
+}
+
+.summary-modal.show .summary-container {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 🔷 SUMMARY: stronger card boundaries */
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 16px 12px 16px;
+  border: 1px solid #eceff3;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: none;
+  gap: 16px;
+}
+
+.summary-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.summary-header-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding-left: 20px;
+  align-self: flex-start;
+}
+
+.summary-back-btn {
+  cursor: pointer;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+.summary-header-title {
+  text-align: left;
+}
+
+.summary-header-title-main {
+  font-weight: 600;
+  font-size: 15px;
+  color: #6b7280;
+  line-height: 1.15;
+}
+
+.summary-header-title-sub {
+  margin-top: 6px;
+  color: #334155;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.summary-header-title-meta {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.summary-header .btn-primary {
+  font-size: 14px;
+  padding: 10px 18px;
+}
+
+.summary-kpi-card {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  background: #ffffff;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ea;
+}
+
+.summary-main-left {
+  flex: 1;
+  min-width: 0;
+  padding-right: 20px;
+  border-right: 1px solid #e5e7eb;
+}
+
+.summary-main-right {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding-left: 4px;
+}
+
+.summary-performance-box {
+  background: #fff;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #dbe2ea;
+  flex: 0 0 240px;
+  min-width: 220px;
+  max-width: 240px;
+  box-sizing: border-box;
+}
+
+.summary-kpi-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.summary-kpi-subtitle {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.summary-performance-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.summary-performance-value {
+  margin: 4px 0 0;
+  font-size: 40px;
+  line-height: 1;
+  color: #111827;
+}
+
+.summary-performance-badge {
+  margin-top: 8px;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #dbe2ea;
+  background: #fff;
+}
+
+.summary-performance-keymap {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #374151;
+  min-width: 180px;
+}
+
+.summary-keymap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.summary-keymap-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.summary-meta-grid {
+  margin-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 18px 36px;
+  max-width: 920px;
+}
+
+.summary-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.summary-meta-label {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 0;
+  text-align: left;
+}
+
+.summary-meta-value {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 0;
+  text-align: left;
+  justify-self: start;
+  line-height: 1.25;
+}
+
+.summary-table-card {
+  margin-top: 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: none;
+}
+
+.summary-table-row {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr 1fr;
+  padding: 11px 14px;
+  border-bottom: 1px solid #edf2f7;
+  background: #fff;
+  font-size: 12px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.summary-table-total {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr 1fr;
+  padding: 11px 14px;
+  background: #6b5ca5;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  min-height: 40px;
+  align-items: center;
+}
+
+.summary-table-head {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr 1fr 1fr;
+  background: #6b5ca5;
+  color: #fff;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 40px;
+  align-items: center;
+}
+
+.summary-code-cell {
+  display: flex;
+  align-items: center;
+}
+
+.summary-code-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #ede9fe;
+  color: #5b21b6;
+  font-weight: 600;
+  font-size: 11px;
+  border: 1px solid #ddd6fe;
+  line-height: 1.2;
+}
+
+/* Colour bands apply only to “Total Grade Achieved (%)” column in body rows */
+.summary-band-cell {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.summary-band-excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.summary-band-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.summary-band-weak {
+  background: #ffe4e6;
+  color: #be123c;
+}
+
+.summary-table-total .summary-total-plain {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Only total grade uses keyed colour pill; weight & result stay white on purple */
+.summary-table-total .summary-total-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.summary-table-total .summary-total-pill.summary-band-excellent {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+.summary-table-total .summary-total-pill.summary-band-medium {
+  background: #fcd34d;
+  color: #78350f;
+}
+
+.summary-table-total .summary-total-pill.summary-band-weak {
+  background: #fda4af;
+  color: #881337;
+}
+
+/* Submodule line-item tables (read-only, same visual language as master summary) */
+.summary-submodules-wrap {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary-submodule-block {
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.summary-submodule-title {
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.summary-submodule-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.summary-submodule-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.summary-submodule-scroll::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 4px;
+}
+
+.summary-submodule-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: #374151;
+}
+
+.summary-submodule-table thead th {
+  background: #6b5ca5;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: left;
+  padding: 10px 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid #5b4a9a;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.summary-submodule-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #edf2f7;
+  vertical-align: top;
+  max-width: 280px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.summary-submodule-table tbody tr:nth-child(even) td {
+  background: #fafafa;
+}
+
+.summary-submodule-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.summary-submodule-empty {
+  text-align: center;
+  color: #6b7280;
+  font-style: italic;
+  padding: 16px !important;
+}
+
+.summary-submodule-loading,
+.summary-submodule-error {
+  padding: 14px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.summary-submodule-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .summary-header {
+    flex-direction: column;
+  }
+
+  .summary-header-right {
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  .summary-kpi-card {
+    flex-direction: column;
+  }
+
+  .summary-main-left {
+    padding-right: 0;
+    border-right: none;
+  }
+
+  .summary-main-right {
+    padding-left: 0;
+  }
+
+  .summary-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+/* Facilio-like create full page */
+.btn-secondary {
+  background: #fff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+}
+
+.create-form-shell {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.summary-container.create-form-shell {
+  padding: 0;
+}
+
+.create-page-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.create-left-rail {
+  border-right: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 12px 8px;
+}
+
+.create-rail-title {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0 0 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.create-rail-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: #fff;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.create-layout-select {
+  width: 160px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  color: #374151;
+}
+
+.create-rail-item.active {
+  background: #eef2f6;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.create-rail-item.is-disabled,
+.create-rail-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.create-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100vh;
+}
+
+.create-main-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 16px;
+}
+
+.create-main-top-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.create-main-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.create-main-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 8px;
+}
+
+.create-main-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.06);
+}
+
+.create-form-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px;
+}
+
+.facilio-form-card {
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Main KPI fields — card like earlier Facilio-style (separate from scroll / subforms) */
+.create-fields-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 4px;
+}
+
+.create-form-field {
+  margin-bottom: 14px;
+}
+
+.create-form-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.create-form-field input:not([type="checkbox"]),
+.create-form-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  color: #111827;
+  background: #fff;
+}
+
+.create-form-field input:disabled,
+.create-form-field select:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.facilio-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.facilio-sub-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px;
+}
+
+.create-section-split {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  scroll-margin-top: 12px;
+}
+
+.create-form-section {
+  scroll-margin-top: 12px;
+}
+
+.subform-wrap {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background: #fff;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.subform-wrap::-webkit-scrollbar {
+  height: 12px;
+}
+
+.subform-wrap::-webkit-scrollbar-thumb {
+  background: #c5cad3;
+  border-radius: 6px;
+}
+
+.subform-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+}
+
+.subform-table th,
+.subform-table td {
+  border-bottom: 1px solid #e8eaed;
+  border-right: 1px solid #eef1f4;
+  padding: 10px 12px;
+  font-size: 13px;
+  text-align: left;
+  vertical-align: top;
+  min-width: 112px;
+  max-width: 280px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.subform-table th:last-child,
+.subform-table td:last-child {
+  border-right: none;
+}
+
+.subform-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.subform-table th {
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.subform-table td .subform-cell-inner {
+  display: block;
+  min-width: 0;
+}
+
+.subform-table td input,
+.subform-table td select,
+.subform-table td textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  color: #111827;
+}
+
+.subform-table td textarea {
+  min-width: 140px;
+  min-height: 60px;
+  resize: vertical;
+  display: block;
+}
+
+.subform-table .subform-grade-readonly {
+  display: inline-block;
+  min-width: 4.5rem;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+
+.field-error {
+  border: 1px solid #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+#appToastHost {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10050;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-toast {
+  min-width: 260px;
+  max-width: 420px;
+  background: #ffffff;
+  color: #1f2937;
+  border-left: 4px solid #ef4444;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.form-calc-help {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.form-calc-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.form-calc-help ul {
+  margin: 8px 0 0;
+  padding-left: 1.25rem;
+}
+
+.form-calc-help code {
+  font-size: 12px;
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.subform-th-required::after {
+  content: " *";
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.subform-table th .th-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.subform-actions {
+  margin-top: 10px;
+}
+
+.subform-add-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.subform-del-btn {
+  border: none;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.create-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔷 HEADER -->
+<div class="header-card">
+  <div class="header-left">
+    <h2>Key Performance Indicator</h2>
+    <p>Unified Facilities Management Contract</p>
+  </div>
+  <button type="button" class="btn-primary" onclick="openCreateKpiModal()">New Key Performance Indicator</button>
+</div>
+
+<!-- 🔷 TABLE CARD -->
+<div class="table-card">
+
+  <!-- 🔷 TOP BAR -->
+  <div class="table-top">
+    <div id="recordCount">0 records</div>
+
+    <div class="pagination">
+      <button onclick="prevPage()">&lt;</button>
+      <span id="pageInfo"></span>
+      <button onclick="nextPage()">&gt;</button>
+    </div>
+  </div>
+
+  <!-- 🔷 HEADER -->
+  <div class="table-header">
+    <div>ID</div>
+    <div>Date</div>
+    <div>Area</div>
+    <div>Performance Indicator</div>
+    <div>Light</div>
+    <div>Operational</div>
+    <div>Heavy</div>
+    <div>Contract</div>
+    <div>Work Order</div>
+  </div>
+
+  <div id="tableBody"></div>
+
+</div>
+
+<script>
+
+let data = [];
+let currentPage = 1;
+const rowsPerPage = 20;
+let lastSummaryRecordId = null;
+/** Cached child rows by module for the open summary (Excel/CSV reuse). */
+let summaryExportChildRowsByModule = null;
+let summaryExportChildRowsKpiId = null;
+
+/*
+  Customer prototype mode:
+  keep form/create flows intact, but show fixed values in list + summary.
+*/
+const USE_STATIC_PROTOTYPE_LIST = true;
+const STATIC_PROTOTYPE_ROWS = [
+  {
+    id: 1001,
+    recordName: "November 2025 #1001",
+    dateMonth: new Date("2025-11-01T09:00:00").getTime(),
+    area: "Central Region",
+    contractor: "Shelfa Facilities Management Company",
+    projectNumber: "All",
+    workOrder: "TBC005754",
+    metrics: {
+      CM: { weight: 10, grade: 9, result: 9.485714286 },
+      OM: { weight: 15, grade: 14, result: 13.71 },
+      SS: { weight: 45, grade: 45, result: 44.63815789 },
+      HS: { weight: 30, grade: 20, result: 19.88055715 }
+    },
+    totals: { weight: 100, grade: 88, result: 87.71480562, performance: 88 }
+  },
+  {
+    id: 1002,
+    recordName: "December 2025 #1002",
+    dateMonth: new Date("2025-12-01T09:00:00").getTime(),
+    area: "Central Region",
+    contractor: "Shelfa Facilities Management Company",
+    projectNumber: "All",
+    workOrder: "TBC005754",
+    metrics: {
+      CM: { weight: 10, grade: 10, result: 9.92 },
+      OM: { weight: 15, grade: 13, result: 13.22 },
+      SS: { weight: 45, grade: 44, result: 44.12 },
+      HS: { weight: 30, grade: 22, result: 21.54 }
+    },
+    totals: { weight: 100, grade: 89, result: 88.8, performance: 89 }
+  },
+  {
+    id: 1003,
+    recordName: "January 2026 #1003",
+    dateMonth: new Date("2026-01-01T09:00:00").getTime(),
+    area: "Central Region",
+    contractor: "Shelfa Facilities Management Company",
+    projectNumber: "All",
+    workOrder: "TBC005754",
+    metrics: {
+      CM: { weight: 10, grade: 8, result: 8.44 },
+      OM: { weight: 15, grade: 13, result: 12.88 },
+      SS: { weight: 45, grade: 43, result: 43.35 },
+      HS: { weight: 30, grade: 21, result: 20.66 }
+    },
+    totals: { weight: 100, grade: 85, result: 85.33, performance: 85 }
+  },
+  {
+    id: 1004,
+    recordName: "February 2026 #1004",
+    dateMonth: new Date("2026-02-01T09:00:00").getTime(),
+    area: "Central Region",
+    contractor: "Shelfa Facilities Management Company",
+    projectNumber: "All",
+    workOrder: "TBC005754",
+    metrics: {
+      CM: { weight: 10, grade: 9, result: 9.24 },
+      OM: { weight: 15, grade: 15, result: 14.84 },
+      SS: { weight: 45, grade: 45, result: 44.75 },
+      HS: { weight: 30, grade: 23, result: 22.41 }
+    },
+    totals: { weight: 100, grade: 92, result: 91.24, performance: 92 }
+  }
+];
+
+function buildStaticPrototypeRawRecord(row) {
+  return {
+    id: row.id,
+    record_name_custom_kpiequations: row.recordName,
+    [createFormFieldLinkNames.displayName]: row.recordName,
+    date_month_custom_kpiequations: row.dateMonth,
+    area_custom_kpiequations: row.area,
+    contractor_custom_kpiequations: row.contractor,
+    project_number_custom_kpiequations: row.projectNumber,
+    work_order_custom_kpiequations: row.workOrder,
+    performance_indicator_custom_kpiequations: row.totals.performance,
+    __prototypeMetrics: row.metrics,
+    __prototypeTotals: row.totals
+  };
+}
+
+function buildStaticPrototypeListRows() {
+  return [...STATIC_PROTOTYPE_ROWS]
+    .sort((a, b) => b.dateMonth - a.dateMonth)
+    .map(row => {
+    const rawRecord = buildStaticPrototypeRawRecord(row);
+    return {
+      id: row.id,
+      rawRecord,
+      recordName: row.recordName,
+      dateRaw: row.dateMonth,
+      date: formatDate(row.dateMonth),
+      area: row.area,
+      contractor: row.contractor,
+      projectNumber: row.projectNumber,
+      performance: row.totals.performance,
+      light: row.metrics.SS.grade,
+      lightTarget: row.metrics.SS.weight,
+      op: row.metrics.OM.grade,
+      opTarget: row.metrics.OM.weight,
+      heavy: row.metrics.HS.grade,
+      heavyTarget: row.metrics.HS.weight,
+      contract: row.metrics.CM.grade,
+      contractTarget: row.metrics.CM.weight,
+      workOrder: row.workOrder
+    };
+  });
+}
+
+function buildStaticPrototypeSummarySubmoduleRowsByModule() {
+  const out = {};
+  SUBFORM_UI_SPECS.forEach(spec => {
+    const moduleLinkName = spec.moduleLinkName;
+    const F = serviceFieldLinkNames(moduleLinkName);
+    const sourceRows = SERVICE_SEED_ROWS[moduleLinkName] || [];
+    out[moduleLinkName] = sourceRows.map((seed, idx) => {
+      const row = rowFromSeed(seed);
+      const grade = computeRowGradePercent(row);
+      return {
+        id: `${moduleLinkName}-${idx + 1}`,
+        [F.recordName]: row.recordName || row.performanceId || `Row ${idx + 1}`,
+        [F.displayNameField]: row.recordName || row.performanceId || `Row ${idx + 1}`,
+        [F.gradeCredited]: grade != null ? grade : safeNumber(row.seedGrade),
+        [F.entrance1]: row.typography,
+        [F.entrance2]: row.maqam,
+        [F.valueMonthPerformance]: row.valueMonthPerformance,
+        [F.requiredData]: row.requiredData,
+        [F.source]: row.source,
+        [F.objective]: row.objective,
+        [F.indexMeasurementFormula]: row.indexMeasurementFormula || row.equation || "",
+        [F.description]: row.description,
+        [F.levelOfImportance]: row.levelOfImportance,
+        [F.indicator]: row.indicator,
+        [F.serviceCategory]: row.serviceCategory,
+        [F.performanceId]: row.performanceId,
+        [F.applicable]: row.applicable
+      };
+    });
+  });
+  return out;
+}
+
+const summaryServiceCategories = [
+  { code: "CM", name: "Contract Management" },
+  { code: "OM", name: "Operational" },
+  { code: "SS", name: "Light Services" },
+  { code: "HS", name: "Heavy Services" }
+];
+
+function safeNumber(val) {
+  return val ? Number(val) : 0;
+}
+
+/*
+  SINGLE CONFIG: field linknames for summary modal AND list columns (Light / Operational / Heavy / Contract).
+  Edit only the strings below — list table uses the same keys via listColumnToSummaryCode.
+*/
+const summaryFieldLinkNames = {
+  CM: {
+    weight: "contract_management_service_value_custom_kpiequations",
+    grade: "contract_management_service_value_custom_kpiequations",
+    result: "contract_management_service_value_custom_kpiequations"
+  },
+  OM: {
+    weight: "operational_service_value_custom_kpiequations",
+    grade: "operational_service_value_custom_kpiequations",
+    result: "operational_service_value_custom_kpiequations"
+  },
+  SS: {
+    weight: "light_scorecard_weight_custom_kpiequations",
+    grade: "light_grade_achieved_custom_kpiequations",
+    result: "light_services_value_custom_kpiequations"
+  },
+  HS: {
+    weight: "heavy_service_value_custom_kpiequations",
+    grade: "heavy_service_value_custom_kpiequations",
+    result: "heavy_service_value_custom_kpiequations"
+  }
+};
+
+const summaryDummyRecordByLinkName = {
+  contract_management_service_value_custom_kpiequations: 10,
+  operational_service_value_custom_kpiequations: 10,
+  light_scorecard_weight_custom_kpiequations: 45,
+  light_grade_achieved_custom_kpiequations: 37,
+  light_services_value_custom_kpiequations: 37,
+  heavy_service_value_custom_kpiequations: 25
+};
+
+/* Create-record payload: align with your module field linknames */
+const createFormFieldLinkNames = {
+  name: "record_name_custom_kpiequations",
+  /** Often the list “Name” column in Facilio uses this link on module custom_kpiequations. */
+  displayName: "name_custom_kpiequations",
+  dateMonth: "date_month_custom_kpiequations",
+  area: "area_custom_kpiequations",
+  contractor: "contractor_custom_kpiequations",
+  workOrder: "work_order_custom_kpiequations",
+  projectNumber: "project_number_custom_kpiequations",
+  lightAverage: "light_services_value_custom_kpiequations",
+  lightSize: "light_scorecard_weight_custom_kpiequations"
+};
+
+/** KPI master lookup on child rows: link name is always `kpi_equations_<childModuleLinkName>`. */
+function childModuleKpiLookupLinkName(moduleLinkName) {
+  return `kpi_equations_${moduleLinkName}`;
+}
+
+function serviceFieldLinkNames(moduleLinkName) {
+  const m = moduleLinkName;
+  return {
+    moduleLinkName: m,
+    recordName: `record_name_${m}`,
+    /** Facilio “Name” on custom modules is often `name_<moduleLinkName>` (not only record_name_*). */
+    displayNameField: `name_${m}`,
+    kpiLookup: childModuleKpiLookupLinkName(m),
+    gradeCredited: `grade_credited_${m}`,
+    entrance2: `entrance_no__2__maqam_${m}`,
+    entrance1: `entrance_no__1__typography_${m}`,
+    valueMonthPerformance: `value_achieved_in_the_current_month_performance_${m}`,
+    requiredData: `required_data_${m}`,
+    source: `source_${m}`,
+    objective: `objective_${m}`,
+    indexMeasurementFormula: `index_measurement_formula_${m}`,
+    description: `description_${m}`,
+    levelOfImportance: `level_of_importance_${m}`,
+    indicator: `indicator_${m}`,
+    serviceCategory: `service_category_${m}`,
+    performanceId: `performance_id_${m}`,
+    applicable: `applicable_not_applicable_${m}`
+  };
+}
+
+const SUBFORM_UI_SPECS = [
+  {
+    moduleLinkName: "custom_lightservices",
+    title: "Light Services",
+    sectionId: "createSectionLight",
+    tbodyId: "lightSubformBody",
+    railTab: "light",
+    summaryCode: "SS"
+  },
+  {
+    moduleLinkName: "custom_heavyservices",
+    title: "Heavy Services",
+    sectionId: "createSectionHeavy",
+    tbodyId: "heavySubformBody",
+    railTab: "heavy",
+    summaryCode: "HS"
+  },
+  {
+    moduleLinkName: "custom_contractmanagement",
+    title: "Contract Management Services",
+    sectionId: "createSectionContract",
+    tbodyId: "contractSubformBody",
+    railTab: "contract",
+    summaryCode: "CM"
+  },
+  {
+    moduleLinkName: "custom_operationalperformanceindicator",
+    title: "Operational Services",
+    sectionId: "createSectionOperational",
+    tbodyId: "operationalSubformBody",
+    railTab: "operational",
+    summaryCode: "OM"
+  }
+];
+
+const DEFAULT_WEIGHT_FALLBACK = { SS: 45, HS: 25, OM: 10, CM: 10 };
+
+/** Master module: overall performance % (Σ weighted grades / Σ weights × 100). */
+const KPI_PERFORMANCE_INDICATOR_FIELD = "performance_indicator_custom_kpiequations";
+
+/** When weight/grade share one Facilio field, never read "weight" from the record — it holds the grade. */
+function effectiveServiceWeightPercent(summaryCode, item) {
+  const sn = summaryFieldLinkNames[summaryCode];
+  const fallback = DEFAULT_WEIGHT_FALLBACK[summaryCode] ?? 0;
+  if (!sn) return fallback;
+  if (sn.weight === sn.grade || sn.weight === sn.result) return fallback;
+  return safeNumber(item?.[sn.weight]) || fallback;
+}
+
+function formatKpiMonthYearLabel(dateMs) {
+  const d = dateMs != null ? new Date(dateMs) : new Date();
+  if (Number.isNaN(d.getTime())) return "KPI Equations";
+  return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+}
+
+function formatKpiRecordName(dateMs, recordId) {
+  return `${formatKpiMonthYearLabel(dateMs)} #${recordId}`;
+}
+
+function displayRecordNameWithoutId(name) {
+  const s = String(name ?? "").trim();
+  if (!s) return "";
+  return s.replace(/\s+#\d+\s*$/, "").trim();
+}
+
+const createFormDefaults = {
+  area: "Central Region",
+  contractor: "Shelfa Facilities Management Company",
+  workOrder: "TBC005754",
+  projectNumber: "All"
+};
+
+let createFormNameLockedByUser = false;
+let createServiceSubRows = {
+  custom_lightservices: [],
+  custom_heavyservices: [],
+  custom_contractmanagement: [],
+  custom_operationalperformanceindicator: []
+};
+
+/*
+  Prefill from KPI worksheets (example / equations columns ignored).
+  Entrance No. 2 (Maqam) = default denominator (n02), prefilled from sheet.
+  Entrance No. 1 (Typography) = user-entered numerator (n01); starts empty.
+  See MAQAM_DEFAULT_BY_PERFORMANCE_ID when sheet Maqam ≠ stored typography column.
+*/
+const SERVICE_SEED_ROWS = {
+  custom_lightservices: [
+    {
+      performanceId: "SS.1",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 94,
+      typography: 320,
+      valueMonthPerformance: "% نسبة الامتثال",
+      requiredData: "تقرير زيارة وتقييم اعمال النظافة من استشاري الاشراف",
+      source: "نطاق العمل البند 4.2 والبند 4.5",
+      objective: "95% Compliance",
+      indexMeasurementFormula:
+        "Number of Matching Building s/Total Number of Building s Visited",
+      description:
+        "All building items are clean, consumables are available at the times of the visit of the supervision consultant",
+      levelOfImportance: "High",
+      indicator: "Convenience of cleaning services",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.2",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 342,
+      valueMonthPerformance: "نسبة التنفيذ=%",
+      requiredData: "بيان سجل النظام لاعمال النظافة",
+      source: "نطاق العمل البند 4.2",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Number of Executed Cleaning Work Orders / Total Cleaning Work Orders per Month",
+      description: "Implementation of cleaning works according to the approved plan",
+      levelOfImportance: "High",
+      indicator: "Efficiency of the hygiene plan",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.3",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 29,
+      valueMonthPerformance: "نسبة التنفيذ=%",
+      requiredData: "تقرير عدم توفر الدخول للمبنى",
+      source: "نطاق العمل البند 4.6 الرقم 1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Number of Key Availability Cases/Number of Key and Access Requests",
+      description:
+        "Processes of receiving keys for buildings their preservation and availability",
+      levelOfImportance: "Medium",
+      indicator: "Convenience of Key Management Services",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.4",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "نسبة التنفيذ=%",
+      requiredData: "خطة الاعمال لمكافحة الافات والرش",
+      source:
+        "نطاق العمل البند 4.7 الرقم 3 جدول 39 والبند 1.4 جدول 1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Number of Spray Work Orders Executed/Total Spray Work Orders",
+      description: "Implementation of the scope of services by SLA",
+      levelOfImportance: "Medium",
+      indicator:
+        "Efficient Service Level Plan and Agreement for Pest Control and Pesticide Spraying Works",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.5",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "نسبة التنفيذ=%",
+      requiredData: "خطة الاعمال لغسيل الخزانات",
+      source:
+        "نطاق العمل البند 4.8 الرقم 1 جدول 40 والبند 1.4 جدول 1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Number of Executed Tank Wash Work Orders/Total Tank Wash Orders",
+      description: "Implementation of the scope of services by SLA",
+      levelOfImportance: "Medium",
+      indicator:
+        "Efficiency of the service level plan and agreement for the work of washing water tank",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.6",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "% نسبة الامتثال",
+      requiredData: "بيان تحديد مواقع التغطية بالمباني من مزود الخدمة الوطني",
+      source: "نطاق العمل البند 4.9 الرقم 1 والجدول 4.1 وجدول 1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Cases of Dealing with Building Water Outages / Total Number of Buildings",
+      description:
+        "Ensuring that there is no interruption of water to the buildings served by the national service provider.",
+      levelOfImportance: "Medium",
+      indicator: "Efficiency of Water Supply Services for Buildings",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.7",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "% نسبة الامتثال",
+      requiredData: "بيان تحديد مواقع التغطية بالمباني من مزود الخدمة الوطني",
+      source: "نطاق العمل البند 4.10 الرقم 1 والجدول 4.2 والبند 1.4 وجدول 1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Full Compliance i.e. 100% (Cases of Collections of Wastewater for Buildings / Total Number of Buildings in Contract)",
+      description:
+        "Ensuring that the sewage waste water of the buildings served by the national service provider does not collect.",
+      levelOfImportance: "Medium",
+      indicator: "Efficiency of sewage scavenging services",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "SS.8",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 0,
+      typography: 0,
+      valueMonthPerformance:
+        "% نسبة التنفيذ = قياس المؤشر بناء على الجدول الموضح في الخطة الشاملة",
+      requiredData: "# المباني بها مساحات خضراء بالشهر السابق",
+      source: "نطاق العمل البند 4.11",
+      objective: "Planting of 5% empty spaces per year.",
+      indexMeasurementFormula:
+        "# Buildings Planted by Year / # Total Buildings Planned to Be Planted",
+      description: "Planting empty spaces for buildings with planting places.",
+      levelOfImportance: "Medium",
+      indicator: "Efficient Gardening Plan",
+      serviceCategory: "SS",
+      applicable: "No"
+    },
+    {
+      performanceId: "SS.9",
+      equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
+      gradeCredited: 100,
+      typography: 35,
+      valueMonthPerformance: "نسبة التنفيذ=%",
+      requiredData: "# المباني بها مساحات خضراء بالشهر السابق",
+      source: "نطاق العمل البند 4.11",
+      objective:
+        "100% Compliance — Coordination work orders for executed sites/Total tasks for site coordination",
+      indexMeasurementFormula:
+        "# Coordination work orders for executed sites / Total tasks for site coordination",
+      description:
+        "Maintenance of pre-planted green spaces added to new agriculture.",
+      levelOfImportance: "Low",
+      indicator: "Convenience of Location Coordination Services",
+      serviceCategory: "SS",
+      applicable: "Yes"
+    }
+  ],
+  custom_operationalperformanceindicator: [
+    {
+      performanceId: "OM.1",
+      gradeCredited: 100,
+      typography: 0,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Quality Assurance Consultant Report and Supervision Consultant Report",
+      source: "Scope of Action Item 9.1 No. 2",
+      objective:
+        "Ensure that no case of quality assurance violations is recorded, so that each recorded report results in a loss of compliance.",
+      indexMeasurementFormula:
+        "Full Compliance = 100% - (Number of Violations Reports (NCR)) (5% * …)",
+      description: "Identify and measure reports of abuses",
+      levelOfImportance: "High",
+      indicator: "Quality Assessment for Contract Management",
+      serviceCategory: "OM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "OM.2",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "Implementation Rate = %",
+      requiredData:
+        "Supervisory consultant's report on the number of unexecuted works and the total required works",
+      source: "Scope of Work 2.3",
+      objective: "Compliance 100%",
+      indexMeasurementFormula: "Number of works executed/total works required",
+      description: "Do all the work for the support desk",
+      levelOfImportance: "Medium",
+      indicator: "Support Desk Efficiency",
+      serviceCategory: "OM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "OM.3",
+      gradeCredited: 100,
+      typography: 2,
+      valueMonthPerformance: "Availability Rate = %",
+      requiredData: "Report of the Records Management Supervision Consultant",
+      source: "Scope of Work 1.21",
+      objective: "Compliance 100%",
+      indexMeasurementFormula: "Number of Availability/Total Records Requests",
+      description:
+        "Document and archive all business records and make them available directly when needed",
+      levelOfImportance: "Low",
+      indicator: "Convenience of records management",
+      serviceCategory: "OM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "OM.4",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData: "Statement of Regulations for the Register of Guarantees",
+      source: "Scope of Action Item No. 1.20",
+      objective:
+        "Complete and up-to-date record of all warranties (100% compliance)",
+      indexMeasurementFormula:
+        "Number of equipment and devices maintained using warranty and recorded/total number of equipment and appliance reports under warranty",
+      description:
+        "Ensure that the warranties of the devices and equipment are registered and follow up on their cases to report faults from the warranty providers and update the record for them",
+      levelOfImportance: "Medium",
+      indicator: "Adequacy of collateral management",
+      serviceCategory: "OM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "OM.5",
+      gradeCredited: 57,
+      typography: 1500,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Accreditation Report of the Supervision Consultant for the Number of Matching Certificates",
+      source: "Scope of Action Item 10.1 No",
+      objective: "Compliance 100%",
+      indexMeasurementFormula:
+        "Number of Certificates of Completion submitted on time during the month/ Total number of certificates required during the month",
+      description:
+        "Total number of certificates of achievement from users for works executed per month",
+      levelOfImportance: "High",
+      indicator: "Appropriate Delivery Date",
+      serviceCategory: "OM",
+      applicable: "Yes"
+    }
+  ],
+  custom_heavyservices: [
+    {
+      performanceId: "HS.1",
+      gradeCredited: 100,
+      typography: 873,
+      valueMonthPerformance: "Implementation Rate = %",
+      requiredData: "System Record Statement for Preventive Maintenance",
+      source: "Scope of work Clause .No 3.3.1",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Number of Preventive Maintenance Work Orders / Executed …",
+      description:
+        "Carrying out preventive maintenance works according to the approved plan",
+      levelOfImportance: "High",
+      indicator: "Efficient Preventive Maintenance Plan",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.2",
+      gradeCredited: 32.03,
+      typography: 1129,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData: "Monthly System Log",
+      source: "Scope of work for all SLAs",
+      objective: "100% Compliance",
+      indexMeasurementFormula:
+        "Full Compliance (#) - i.e. 100% Total Tasks …",
+      description: "Measuring SLA compliance",
+      levelOfImportance: "High",
+      indicator: "Efficiency of the maintenance plan for backlogs",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.3",
+      gradeCredited: 49.43,
+      typography: 357,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      source:
+        "Scope of work Regulation .No 1.3.3 and Regulation .No 2.5.3 and 2.2 Table 28",
+      objective:
+        "Ensuring that the percentage of reports against tasks decreases at the beginning of the contract period",
+      indexMeasurementFormula:
+        "Total preventive tasks/registered communication(s)/(100(20…",
+      description:
+        "The entire electrical network of the buildings has been inspected, damaged parts have been replaced and tested according to the plan",
+      levelOfImportance: "Medium",
+      indicator: "Electricity Grid Efficiency",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.4",
+      gradeCredited: 72.1,
+      typography: 197,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      source:
+        "Scope of work Regulation .No 1.3.3 and Regulation .No 2.5.3 and 2.2 Table 28",
+      objective:
+        "Ensuring that the percentage of reports against tasks decreases at the beginning of the contract period",
+      indexMeasurementFormula:
+        "Total preventive tasks/registered communication(s)/(100(20…",
+      description:
+        "All alarm and fire fighting systems for buildings have been inspected, damaged parts replaced, and tested according to plan.",
+      levelOfImportance: "Medium",
+      indicator: "Efficiency of alarm systems and fire fighting network",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.5",
+      gradeCredited: 100,
+      typography: 63,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      source:
+        "Scope of work Regulation .No 1.3.3 and Regulation .No 2.5.3 and 2.2 Table 28",
+      objective:
+        "Ensuring that the percentage of reports against tasks decreases at the beginning of the contract period",
+      indexMeasurementFormula:
+        "Total preventive tasks/registered communication(s)/(100(20…",
+      description:
+        "The entire water supply network in the buildings has been inspected, damaged parts replaced, and tested according to the plan.",
+      levelOfImportance: "Medium",
+      indicator: "Water Network Efficiency",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.6",
+      gradeCredited: 100,
+      typography: 172,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      source:
+        "Scope of work Regulation .No 1.3.3 and Regulation .No 2.5.3 and 2.2 Table 28",
+      objective:
+        "Ensuring that the percentage of reports against tasks decreases at the beginning of the contract period",
+      indexMeasurementFormula:
+        "Total preventive tasks/registered communication(s)/(100(20…",
+      description:
+        "The entire electrical network of the air conditioning systems and the air conditioning and ventilation elements of the buildings have been inspected, damaged parts replaced, and tested according to the plan.",
+      levelOfImportance: "Medium",
+      indicator: "Efficiency of HVAC",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.7",
+      gradeCredited: 21.88,
+      typography: 25,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Scope of work Regulation on 3.3, No. 1 Regulation on 5.3 No. 2 and 2.2",
+      source:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      objective: "Efficiency of Elevator Systems",
+      indexMeasurementFormula: "Compliance % = Rate",
+      description:
+        "All elevator elements and systems in the buildings have been inspected damaged parts replaced, and tested according to plan",
+      levelOfImportance: "Medium",
+      indicator: "Total preventive tasks/registered communication / (100 (20)",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.8",
+      gradeCredited: 20.54,
+      typography: 561,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData:
+        "Scope of work Regulation No. 1 3.3 and Regulation No. 2 5.3 Regulation and 2.2 Table 28",
+      source:
+        "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
+      objective: "The appearance of the building and the efficiency of the architectural and structural elements",
+      indexMeasurementFormula: "Compliance % = Rate",
+      description:
+        "All the architectural elements of the buildings are suitable and have been inspected and repaired and tested according to the plan",
+      levelOfImportance: "Medium",
+      indicator: "Total preventive tasks/registered communication / (100 (20)",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.9",
+      gradeCredited: 66.71,
+      typography: 235,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData: "Scope of work Clause No 3.3 1",
+      source: "Supervisory Consulting Review Report",
+      objective: "Efficiency of the toilets",
+      indexMeasurementFormula: "Compliance % = Rate",
+      description:
+        "All the toilets in the buildings have been inspected and all their elements have been repaired according to the plan",
+      levelOfImportance: "Medium",
+      indicator: "Total preventive tasks/registered communication / (100 (20)",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "HS.10",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "Compliance Rate = %",
+      requiredData: "Scope of work Regulation on 3.3 No. 3 and Table 29",
+      source: "Supervisory Consulting Review Report",
+      objective: "Response and Implementation of Receiving Devices and Equipment",
+      indexMeasurementFormula:
+        "Number of Orders Executed/Total Orders Received",
+      description:
+        "Orders for Receipt and Installation of Appliances, Equipment and Furniture",
+      levelOfImportance: "Medium",
+      indicator: "Receipt and installation performance",
+      serviceCategory: "HS",
+      applicable: "Yes"
+    }
+  ],
+  custom_contractmanagement: [
+    {
+      performanceId: "CM.1",
+      gradeCredited: 100,
+      typography: 1713,
+      valueMonthPerformance: "Match Percentage = %",
+      requiredData: "Manpower Distribution Table No. 6 Daily Attendance Schedule",
+      source: "Scope of Work Item 2.1 Point 5 and Item 1.17",
+      objective: "Resident Employment Rate >= Employment Rate by Contract",
+      indexMeasurementFormula:
+        "Calculation of the suitability rate = (Total number of resident workers / total number of workers for the minimum according to the contract)",
+      description: "Employment of the appropriate number of resident and mobile workers",
+      levelOfImportance: "Medium",
+      indicator: "Workforce Suitability",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.2",
+      gradeCredited: 100,
+      typography: 16,
+      valueMonthPerformance: "Output Submission Rate = %",
+      requiredData: "Data and plans required by date",
+      source: "Scope of Action Item Table 1 1.4",
+      objective: "Compliance 100%",
+      indexMeasurementFormula:
+        "Number of Submissions for Outputs and Revisions Required/Total Submissions Required by Period",
+      description: "Employment of the appropriate number of resident and mobile workers",
+      levelOfImportance: "Low",
+      indicator: "Compliance with the submission of required outputs",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.3",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "Implementation Rate = %",
+      requiredData:
+        "Buildings for water # supply # Buildings for sewage waste sweeping # Buildings for installing # spare parts # Buildings for repair works",
+      source: "Scope of Action Clause Clause 4.9 and 3.1 Clause 4.10",
+      objective: "Compliance 100%",
+      indexMeasurementFormula:
+        "Number of Fixed Cost Management Compliance Cases/Total Cases to be Implemented",
+      description:
+        "Submit a fixed cost management plan specified in the contract value to be disbursed on its items indicated to it when needed (iron, consumable spare parts works repairs, water supply, sewage waste sweeping)",
+      levelOfImportance: "Medium",
+      indicator: "Efficient Contract Fixed Cost Management",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.4",
+      gradeCredited: 100,
+      typography: 1,
+      valueMonthPerformance: "Case Processing Rate = %",
+      requiredData:
+        "Emergency Report for All Cases #Registered Emergencies # Expired Cases, RCA Report",
+      source: "Scope of Action Item 1.15",
+      objective: "Compliance 100%",
+      indexMeasurementFormula: "Executed Cases Registered/Total Cases # Registered",
+      description:
+        "The suitability of the plan is calculated by applying all stages of the plan until all cases are completed on time and submitting an RCA",
+      levelOfImportance: "High",
+      indicator: "Appropriateness of the Emergency Event and Disaster Recovery Plan",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.5",
+      gradeCredited: 100,
+      typography: 100,
+      valueMonthPerformance: "Survey Result = %",
+      requiredData: "Report of the results of the previous survey",
+      source: "Scope of Action Item No. 1.22.1",
+      objective: "Achieving 80% satisfaction",
+      indexMeasurementFormula: "Survey score percentage",
+      description:
+        "Measures users' satisfaction with the condition and safety of the systems according to the approved questionnaire",
+      levelOfImportance: "High",
+      indicator: "User satisfaction survey score level",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.6",
+      gradeCredited: 100,
+      typography: 100,
+      valueMonthPerformance: "Star rating score = %",
+      requiredData: "Previous Star Rating Score",
+      source: "Scope of Action Item No. 1.22.1",
+      objective:
+        "Raising the level of evaluation until achieving an evaluation rate of 85% in the fifth month",
+      indexMeasurementFormula: "Number of Star Ratings",
+      description: "Measures users' rating of report closure performance",
+      levelOfImportance: "High",
+      indicator: "User Services Rating Level",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    },
+    {
+      performanceId: "CM.7",
+      gradeCredited: 100,
+      typography: 12,
+      valueMonthPerformance: "Compliance Percentage = %",
+      requiredData:
+        "Statement of Accreditation of the Administrative Staff and Advisory Report of the Supervision of the Availability of All Specializations",
+      source: "Scope of work Regulation 17.1 No. 1",
+      objective: "Compliance 100%",
+      indexMeasurementFormula:
+        "Available Majors / Total Number of Specializations Required",
+      description:
+        "Covering all the specializations required for work within the administrative apparatus",
+      levelOfImportance: "Medium",
+      indicator: "Fit the administrative staff team",
+      serviceCategory: "CM",
+      applicable: "Yes"
+    }
+  ]
+};
+
+function normalizeApplicablePicklist(v) {
+  if (v == null || v === "") return "Applicable";
+  const s = String(v).trim();
+  if (s === "Yes") return "Applicable";
+  if (s === "No") return "Not Applicable";
+  return s;
+}
+
+/* Sheet “Entrance No. 2 (Maqam)” differs from stored `typography` key in seed → set explicit Maqam default */
+const MAQAM_DEFAULT_BY_PERFORMANCE_ID = {
+  "SS.1": 342,
+  "OM.1": 1,
+  "OM.5": 2631,
+  "CM.2": 25,
+  "HS.2": 3525,
+  "HS.3": 706,
+  "HS.4": 706,
+  "HS.7": 32,
+  "HS.8": 706,
+  "HS.9": 706
+};
+
+function defaultMaqamFromSeed(partial) {
+  const pid = partial.performanceId;
+  if (pid && MAQAM_DEFAULT_BY_PERFORMANCE_ID[pid] != null) {
+    return safeNumber(MAQAM_DEFAULT_BY_PERFORMANCE_ID[pid]);
+  }
+  if (partial.maqam != null) return safeNumber(partial.maqam);
+  return safeNumber(partial.typography);
+}
+
+function rowFromSeed(partial) {
+  const seedNo1 =
+    partial.typography == null || partial.typography === "" ? null : safeNumber(partial.typography);
+  return {
+    id: Date.now() + Math.floor(Math.random() * 1e6),
+    recordName: partial.performanceId || "Row",
+    maqam: defaultMaqamFromSeed(partial),
+    /* Testing: preload Entrance No. 1 from sheet data shared earlier. */
+    typography: seedNo1,
+    seedGrade: partial.gradeCredited == null ? null : safeNumber(partial.gradeCredited),
+    equation: partial.equation || "",
+    applicable: normalizeApplicablePicklist(partial.applicable),
+    valueMonthPerformance:
+      partial.valueMonthPerformance != null ? partial.valueMonthPerformance : "",
+    gradeCredited: null,
+    requiredData: partial.requiredData || "",
+    source: partial.source || "",
+    objective: partial.objective || "",
+    indexMeasurementFormula: partial.indexMeasurementFormula || "",
+    description: partial.description || "",
+    levelOfImportance: partial.levelOfImportance || "",
+    indicator: partial.indicator || "",
+    serviceCategory: partial.serviceCategory || "",
+    performanceId: partial.performanceId || ""
+  };
+}
+
+const enableServiceAggregatesSave = true;
+
+function round2(num) {
+  return Math.round(safeNumber(num) * 100) / 100;
+}
+
+function computePerformanceIndicatorFromMasterItem(item) {
+  let sumW = 0;
+  let sumG = 0;
+  for (const code of ["SS", "HS", "OM", "CM"]) {
+    const sn = summaryFieldLinkNames[code];
+    if (!sn) continue;
+    const w = effectiveServiceWeightPercent(code, item);
+    const g = safeNumber(item?.[sn.grade]);
+    sumW += w;
+    sumG += g;
+  }
+  return sumW > 0 ? round2((sumG / sumW) * 100) : 0;
+}
+
+function performanceIndicatorNeedsPersist(item, pi) {
+  const field = KPI_PERFORMANCE_INDICATOR_FIELD;
+  const raw = item?.[field];
+  const missing = raw === undefined || raw === null || raw === "";
+  if (missing) return true;
+  return Math.abs(safeNumber(raw) - pi) > 0.01;
+}
+
+function mergePerformanceIndicatorUpdates(kpiRecords) {
+  const updates = [];
+  const field = KPI_PERFORMANCE_INDICATOR_FIELD;
+  const next = kpiRecords.map(item => {
+    const pi = computePerformanceIndicatorFromMasterItem(item);
+    if (performanceIndicatorNeedsPersist(item, pi)) {
+      updates.push({ id: item.id, payload: { [field]: pi } });
+    }
+    return { ...item, [field]: pi };
+  });
+  return { records: next, updates };
+}
+
+/** Lookup → KPI Equations master (some tenants require moduleName on the reference). */
+function kpiMasterLookupRef(parentId) {
+  const n =
+    typeof parentId === "number" && Number.isFinite(parentId)
+      ? parentId
+      : parseInt(String(parentId), 10);
+  if (!Number.isFinite(n)) return { id: parentId };
+  return { id: n, moduleName: KPI_MASTER_MODULE_NAME };
+}
+
+/**
+ * Set child → master KPI lookup and display names. Retries alternate payload shapes if the API rejects one.
+ */
+async function patchChildKpiLinkAndDisplayName(moduleLinkName, childId, parentId, dateMs) {
+  const LN = serviceFieldLinkNames(moduleLinkName);
+  const label = formatKpiRecordName(dateMs, childId);
+  const linkKey = LN.kpiLookup;
+  const refWithModule = kpiMasterLookupRef(parentId);
+  const refIdOnly = { id: refWithModule.id };
+
+  const namePayload = {
+    [LN.recordName]: label,
+    [LN.displayNameField]: label
+  };
+
+  try {
+    await facilioUpdateRecord(moduleLinkName, childId, {
+      [linkKey]: refWithModule,
+      ...namePayload
+    });
+    return;
+  } catch (e1) {
+    console.warn(`Child update (${moduleLinkName} #${childId}) full patch failed, retrying`, e1);
+  }
+
+  try {
+    await facilioUpdateRecord(moduleLinkName, childId, {
+      [linkKey]: refWithModule
+    });
+  } catch (e2) {
+    console.warn(`Child lookup with moduleName failed, trying id only`, e2);
+    await facilioUpdateRecord(moduleLinkName, childId, { [linkKey]: refIdOnly });
+  }
+
+  try {
+    await facilioUpdateRecord(moduleLinkName, childId, namePayload);
+  } catch (e3) {
+    try {
+      await facilioUpdateRecord(moduleLinkName, childId, { [LN.displayNameField]: label });
+    } catch (e4) {
+      await facilioUpdateRecord(moduleLinkName, childId, { [LN.recordName]: label });
+    }
+  }
+}
+
+function extractLookupId(value) {
+  if (value == null) return null;
+  if (typeof value === "object") {
+    return value.id ?? value.value ?? value.lookupId ?? value._id ?? null;
+  }
+  return value;
+}
+
+/** Unwrap Facilio field values (lookups / rich types) to something displayable or numeric. */
+function unwrapFacilioFieldValue(v) {
+  if (v == null) return v;
+  if (typeof v !== "object" || Array.isArray(v)) return v;
+  const text =
+    v.displayName ?? v.name ?? v.label ?? v.primaryValue ?? v.stringValue ?? v.textValue;
+  if (text != null && String(text).trim() !== "") return text;
+  if (v.value != null && (typeof v.value === "string" || typeof v.value === "number")) {
+    return v.value;
+  }
+  if (v.id != null && text == null && v.displayName == null && v.name == null) {
+    return v.id;
+  }
+  return v;
+}
+
+/**
+ * List API may use different link names than the form (underscores, n01/n02, etc.).
+ * which: 1 = Typography (No1), 2 = Maqam (No2)
+ */
+function resolveEntranceFieldFromApiRow(row, moduleLinkName, which) {
+  if (!row || typeof row !== "object") return undefined;
+  const F = serviceFieldLinkNames(moduleLinkName);
+  const primary = which === 1 ? F.entrance1 : F.entrance2;
+
+  const readKey = key => {
+    if (key == null || !Object.prototype.hasOwnProperty.call(row, key)) return undefined;
+    const raw = row[key];
+    if (raw === undefined || raw === null || raw === "") return undefined;
+    return unwrapFacilioFieldValue(raw);
+  };
+
+  let v = readKey(primary);
+  if (v !== undefined && v !== null && v !== "") return v;
+
+  const m = moduleLinkName;
+  const alts =
+    which === 1
+      ? [
+          `entrance_no_1_typography_${m}`,
+          `no_1_typography_${m}`,
+          `no__1__typography_${m}`,
+          `entrance_no1_typography_${m}`,
+          `typography_${m}`,
+          `n01_${m}`,
+          `no1_${m}`
+        ]
+      : [
+          `entrance_no_2_maqam_${m}`,
+          `no_2_maqam_${m}`,
+          `no__2__maqam_${m}`,
+          `entrance_no2_maqam_${m}`,
+          `maqam_${m}`,
+          `n02_${m}`,
+          `no2_${m}`
+        ];
+  for (const k of alts) {
+    v = readKey(k);
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+
+  const mLc = m.toLowerCase();
+  const mShort = m.replace(/^custom_/, "").toLowerCase();
+  for (const k of Object.keys(row)) {
+    const kl = k.toLowerCase();
+    const forModule =
+      kl.includes(mLc) ||
+      kl.endsWith(`_${mShort}`) ||
+      kl.endsWith(`_${m.toLowerCase()}`) ||
+      kl.includes(`_${mShort}_`);
+    if (!forModule) continue;
+    if (which === 1) {
+      if (
+        /typography|entrance.*1|__1__|(^|_)1(_|$)|\.no1|[^a-z]n0?1[^0-9]|numerator/.test(kl) &&
+        !/maqam|__2__|(^|_)2(_|$)|\.no2|[^a-z]n0?2[^0-9]|denominator/.test(kl)
+      ) {
+        v = readKey(k);
+        if (v !== undefined && v !== null && v !== "") return v;
+      }
+    } else if (
+      /maqam|entrance.*2|__2__|(^|_)2(_|$)|\.no2|[^a-z]n0?2[^0-9]|denominator/.test(kl)
+    ) {
+      v = readKey(k);
+      if (v !== undefined && v !== null && v !== "") return v;
+    }
+  }
+
+  for (const k of Object.keys(row)) {
+    const kl = k.toLowerCase();
+    if (which === 1 && kl.includes("typography")) {
+      v = readKey(k);
+      if (v !== undefined && v !== null && v !== "") return v;
+    }
+    if (which === 2 && kl.includes("maqam")) {
+      v = readKey(k);
+      if (v !== undefined && v !== null && v !== "") return v;
+    }
+  }
+  return undefined;
+}
+
+function normalizeKpiParentIdFromValue(val) {
+  if (val == null || val === "") return null;
+  const id = extractLookupId(val);
+  if (id != null && id !== "") return id;
+  if (typeof val === "number" && Number.isFinite(val)) return val;
+  const s = String(val).trim();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return null;
+}
+
+/** KPI parent id on child rows — configured lookup + any `kpi_equations` / `kpiequations` key. */
+function extractKpiParentIdFromChildRow(row, fields) {
+  if (!row || typeof row !== "object") return null;
+  let id = normalizeKpiParentIdFromValue(row[fields.kpiLookup]);
+  if (id != null) return id;
+  for (const k of Object.keys(row)) {
+    if (/kpi.?equations|kpiequations/i.test(k)) {
+      id = normalizeKpiParentIdFromValue(row[k]);
+      if (id != null) return id;
+    }
+  }
+  return null;
+}
+
+function kpiParentIdsEqual(foundId, expectedKpiId) {
+  if (foundId == null || expectedKpiId == null) return false;
+  const a = String(foundId).trim();
+  const b = String(expectedKpiId).trim();
+  if (a === b) return true;
+  const na = parseInt(a, 10);
+  const nb = parseInt(b, 10);
+  return Number.isFinite(na) && Number.isFinite(nb) && na === nb;
+}
+
+function extractPerformanceIdFromApiRow(row, moduleLinkName) {
+  const f = serviceFieldLinkNames(moduleLinkName).performanceId;
+  let v = row?.[f];
+  if (v == null) return "";
+  if (typeof v === "object") {
+    v = v.displayName ?? v.name ?? v.value ?? v.id;
+  }
+  return String(v).trim();
+}
+
+/** Display / record name from a child-module API row (Facilio may use record_name_*, name_*, or `name`). */
+function extractChildDisplayNameFromApiRow(row, moduleLinkName) {
+  if (!row || typeof row !== "object") return "";
+  const LN = serviceFieldLinkNames(moduleLinkName);
+  const candidates = [row[LN.recordName], row[LN.displayNameField], row.name, row[`name_${moduleLinkName}`]];
+  for (const c of candidates) {
+    if (c != null && String(c).trim() !== "") return String(c).trim();
+  }
+  for (const k of Object.keys(row)) {
+    if (/^record_name_|^name_/.test(k)) {
+      const v = row[k];
+      if (v != null && typeof v === "string" && v.trim()) return v.trim();
+    }
+  }
+  return "";
+}
+
+/**
+ * Load each service submodule separately and pre-fill subform `recordName` from latest rows
+ * (match by Performance ID when possible, otherwise cycle through recent names).
+ */
+async function prefillSubformRowNamesFromLatestModuleRows() {
+  const tasks = SUBFORM_UI_SPECS.map(async spec => {
+    const mod = spec.moduleLinkName;
+    const apiRows = await fetchModuleList(mod, 400);
+    if (!Array.isArray(apiRows) || apiRows.length === 0) return;
+    const sorted = [...apiRows].sort((a, b) => safeNumber(b.id) - safeNumber(a.id));
+    const byPerf = new Map();
+    sorted.forEach(apiRow => {
+      const pid = extractPerformanceIdFromApiRow(apiRow, mod);
+      const nm = extractChildDisplayNameFromApiRow(apiRow, mod);
+      if (!nm) return;
+      if (pid && !byPerf.has(pid)) byPerf.set(pid, nm);
+    });
+    const namesOrdered = sorted.map(r => extractChildDisplayNameFromApiRow(r, mod)).filter(Boolean);
+    const subRows = createServiceSubRows[mod];
+    if (!subRows?.length) return;
+    subRows.forEach((sr, i) => {
+      const pid = (sr.performanceId || "").trim();
+      if (pid && byPerf.has(pid)) {
+        sr.recordName = byPerf.get(pid);
+        return;
+      }
+      if (namesOrdered.length) {
+        sr.recordName = namesOrdered[i % namesOrdered.length];
+      }
+    });
+  });
+  await Promise.all(tasks);
+}
+
+function setCreateFormOverlay(visible, labelText) {
+  const ov = document.getElementById("createFormBusyOverlay");
+  const lbl = document.getElementById("createFormBusyLabel");
+  const submit = document.querySelector("#createKpiForm button[type='submit']");
+  if (lbl && labelText != null && labelText !== "") lbl.textContent = labelText;
+  if (ov) {
+    ov.classList.toggle("show", !!visible);
+    ov.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+  if (submit) submit.disabled = !!visible;
+}
+
+function picklistDisplay(val) {
+  if (val == null) return "";
+  if (typeof val === "object") {
+    return String(
+      val.displayName ?? val.name ?? val.label ?? val.primaryValue ?? val.value ?? val.id ?? ""
+    );
+  }
+  return String(val);
+}
+
+function isApplicableYesValue(raw) {
+  const s = picklistDisplay(raw).trim().toLowerCase();
+  if (!s) return false;
+  if (s === "no" || s.includes("not applicable") || s.includes("n/a")) return false;
+  if (s === "applicable") return true;
+  if (s === "yes" || s.startsWith("yes")) return true;
+  if (s === "1" || s === "true") return true;
+  return false;
+}
+
+/**
+ * Grade % (3 dp) = n01 ÷ n02 × 100
+ * n01 = Entrance No. 1 (Typography) — user input
+ * n02 = Entrance No. 2 (Maqam) — prefilled default (editable if needed)
+ */
+function round3(num) {
+  const n = Number(num);
+  if (Number.isNaN(n)) return null;
+  return Math.round(n * 1000) / 1000;
+}
+
+function evaluateEquationExpression(expr, no1, no2) {
+  const raw = String(expr == null ? "" : expr).trim();
+  if (!raw) return null;
+  const normalized = raw
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/")
+    .replace(/\bn0?1\b/gi, String(no1))
+    .replace(/\bn0?2\b/gi, String(no2))
+    .replace(/\bno\.?\s*1\b/gi, String(no1))
+    .replace(/\bno\.?\s*2\b/gi, String(no2));
+  if (!/^[0-9+\-*/().\s%]+$/.test(normalized)) return null;
+  try {
+    const fn = new Function(`return (${normalized});`);
+    const out = Number(fn());
+    return Number.isFinite(out) ? out : null;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function computeFromEquationText(row, no1, no2) {
+  const eqRaw = String(row?.equation || row?.indexMeasurementFormula || "").trim();
+  if (!eqRaw) return null;
+  const eq = eqRaw.toLowerCase();
+  const ratioPct = (safeNumber(no1) / safeNumber(no2)) * 100;
+
+  /* Sheet pattern (mainly heavy services): if ratio > 20% then use complement %. */
+  if (
+    eq.includes("if") &&
+    (eq.includes("0.20") || eq.includes("20%") || eq.includes("20 %")) &&
+    eq.includes("entrance") &&
+    eq.includes("maqam")
+  ) {
+    const out = ratioPct > 20 ? 100 - ratioPct : ratioPct;
+    return round3(out);
+  }
+
+  const evalOut = evaluateEquationExpression(eqRaw, no1, no2);
+  if (evalOut != null) return round3(evalOut);
+
+  if ((eq.includes("100") && eq.includes("violat")) || eq.includes("ncr")) {
+    if (row?.seedGrade != null) return round3(row.seedGrade);
+  }
+
+  if (eq.includes("entrance") && eq.includes("maqam")) return round3(ratioPct);
+  return null;
+}
+
+function computeRowGradePercent(row) {
+  if (!isApplicableYesValue(row?.applicable)) return null;
+  if (row.typography == null || String(row.typography).trim() === "") {
+    return null;
+  }
+  const no1 = safeNumber(row.typography);
+  const no2 = safeNumber(row.maqam);
+  if (no2 <= 0) return null;
+  const fromEquation = computeFromEquationText(row, no1, no2);
+  if (fromEquation != null) return round3(fromEquation);
+  if (row?.seedGrade != null) return round3(row.seedGrade);
+  return round3((no1 / no2) * 100);
+}
+
+function formatGradeCell(g) {
+  return g == null ? "—" : String(g);
+}
+
+function buildEmptyServiceRow(seed) {
+  return {
+    id: Date.now() + seed + Math.floor(Math.random() * 9999),
+    recordName: `Row ${seed}`,
+    maqam: 1,
+    typography: null,
+    applicable: "Applicable",
+    valueMonthPerformance: "",
+    gradeCredited: null,
+    requiredData: "",
+    source: "",
+    objective: "",
+    indexMeasurementFormula: "",
+    description: "",
+    levelOfImportance: "",
+    indicator: "",
+    serviceCategory: "",
+    performanceId: ""
+  };
+}
+
+function apiChildRowForGradeCompute(row, fields) {
+  const mod = fields.moduleLinkName;
+  const e1 = resolveEntranceFieldFromApiRow(row, mod, 1);
+  const e2 = resolveEntranceFieldFromApiRow(row, mod, 2);
+  return {
+    applicable: row?.[fields.applicable],
+    typography: e1,
+    maqam: e2,
+    gradeCredited: safeNumber(row?.[fields.gradeCredited]),
+    equation: row?.[fields.indexMeasurementFormula],
+    indexMeasurementFormula: row?.[fields.indexMeasurementFormula],
+    seedGrade: null
+  };
+}
+
+function buildServiceAggregateByKpiId(childRows, fields) {
+  const map = {};
+
+  childRows.forEach(row => {
+    const kpiId = extractKpiParentIdFromChildRow(row, fields);
+    if (!kpiId) return;
+    const gradeInput = apiChildRowForGradeCompute(row, fields);
+    if (!isApplicableYesValue(gradeInput.applicable)) return;
+    let formulaValue = computeRowGradePercent(gradeInput);
+    if (formulaValue == null) {
+      const gs = safeNumber(row?.[fields.gradeCredited]);
+      if (gs > 0) formulaValue = round3(gs);
+      else return;
+    }
+    const key = String(kpiId);
+    if (!map[key]) map[key] = { total: 0, count: 0 };
+    map[key].total += formulaValue;
+    map[key].count += 1;
+  });
+
+  return map;
+}
+
+function computeServiceMetricsForKpiRecords(kpiRecords, aggregateMap, summaryCode) {
+  const sn = summaryFieldLinkNames[summaryCode];
+  if (!sn) return { records: kpiRecords, updates: [] };
+  const resultField = sn.result;
+  const gradeField = sn.grade;
+  const weightField = sn.weight;
+  const updates = [];
+  const sameResultGrade = resultField === gradeField;
+  const tripleSame = resultField === gradeField && gradeField === weightField;
+
+  const computed = kpiRecords.map(item => {
+    const key = String(item.id);
+    const agg = aggregateMap[key];
+    if (!agg || agg.count === 0) return item;
+
+    const w = effectiveServiceWeightPercent(summaryCode, item);
+    const averageValue = round2(agg.total / agg.count);
+    const weightedGrade = w > 0 ? round2((averageValue * w) / 100) : round2(averageValue);
+
+    const patch = {};
+    if (tripleSame) {
+      if (gradeField) patch[gradeField] = weightedGrade;
+    } else if (sameResultGrade) {
+      if (weightField && weightField !== gradeField) patch[weightField] = w;
+      if (gradeField) patch[gradeField] = weightedGrade;
+    } else {
+      if (resultField) patch[resultField] = averageValue;
+      if (gradeField) patch[gradeField] = weightedGrade;
+    }
+
+    const currentGrade = safeNumber(item?.[gradeField]);
+    const gradeChanged = Math.abs(currentGrade - weightedGrade) > 0.01;
+
+    let needsUpdate = gradeChanged;
+    if (!tripleSame && !sameResultGrade && resultField) {
+      const currentResult = safeNumber(item?.[resultField]);
+      needsUpdate =
+        needsUpdate || Math.abs(currentResult - averageValue) > 0.01;
+    }
+    if (sameResultGrade && !tripleSame && weightField && weightField !== gradeField) {
+      const cw = safeNumber(item?.[weightField]);
+      needsUpdate = needsUpdate || Math.abs(cw - w) > 0.01;
+    }
+
+    if (needsUpdate) {
+      const payload = {};
+      if (tripleSame && gradeField) {
+        payload[gradeField] = weightedGrade;
+      } else if (sameResultGrade) {
+        if (weightField && weightField !== gradeField) payload[weightField] = w;
+        if (gradeField) payload[gradeField] = weightedGrade;
+      } else {
+        if (resultField) payload[resultField] = averageValue;
+        if (gradeField) payload[gradeField] = weightedGrade;
+      }
+      if (Object.keys(payload).length) {
+        updates.push({ id: item.id, payload });
+      }
+    }
+
+    return { ...item, ...patch };
+  });
+
+  return { records: computed, updates };
+}
+
+function mergeKpiUpdatesById(updateList) {
+  const map = new Map();
+  updateList.forEach(u => {
+    if (!u || u.id == null) return;
+    const prev = map.get(u.id) || {};
+    map.set(u.id, { id: u.id, payload: { ...prev, ...u.payload } });
+  });
+  return Array.from(map.values());
+}
+
+const KPI_MASTER_MODULE_NAME = "custom_kpiequations";
+/** KPI Equations form (Facilio) — same id used for action form on create. */
+const KPI_MASTER_FORM_ID = 227667;
+
+/**
+ * Optional: form id per sub-module (Setup > Forms). Use null to omit on createRecord.
+ * Fill when Facilio requires formId/actionFormId for child modules (may differ from master 227667).
+ */
+const KPI_SUBFORM_FORM_ID_BY_MODULE = {
+  custom_lightservices: null,
+  custom_heavyservices: null,
+  custom_contractmanagement: null,
+  custom_operationalperformanceindicator: null
+};
+
+const SKIP_CHILD_MODULE_CREATE = new Set([]);
+
+/** Lookup modules (Facilio link names) — options loaded at runtime via fetchAll. */
+const LOOKUP_MODULE_VALUE_ACHIEVED = "custom_valueachievedinthecurrentmonthperformance";
+const LOOKUP_MODULE_SERVICE_CATEGORY = "custom_servicecategory";
+
+let valueAchievedLookupRecords = [];
+let serviceCategoryLookupRecords = [];
+
+/** Fallback if lookup modules cannot be loaded (offline / error). */
+const LOOKUP_ID_MAP_FALLBACK = {
+  valueMonthPerformance: {
+    "المؤشر بناء على الجدول الموضح في الخطة الشاملة": 4131116,
+    "%=نسبة التنفيذ": 4131115,
+    "% نسبة التنفيذ": 4131115,
+    "%نسبة التنفيذ": 4131115,
+    "نسبة التنفيذ %": 4131115,
+    "نسبة التنفيذ=%": 4131115,
+    "% نسبة الامتثال": 4131114,
+    "%نسبة الامتثال": 4131114,
+    "نسبة الامتثال %": 4131114,
+    "Availability Rate = %": 4123191,
+    "Implementation Rate = %": 4123190,
+    "Compliance Rate = %": 4123189,
+    "% نسبة التنفيذ = قياس المؤشر بناء على الجدول الموضح في الخطة الشاملة": 4131116
+  },
+  serviceCategory: {
+    CM: 4123477,
+    OM: 4123476,
+    HS: 4123475,
+    SS: 4123186
+  }
+};
+
+async function refreshLookupOptionCaches() {
+  if (!window.facilioApp?.api?.fetchAll && !window.facilioApp?.request?.invokeFacilioAPI) return;
+  try {
+    const [va, sc] = await Promise.all([
+      fetchModuleList(LOOKUP_MODULE_VALUE_ACHIEVED, 500),
+      fetchModuleList(LOOKUP_MODULE_SERVICE_CATEGORY, 200)
+    ]);
+    valueAchievedLookupRecords = Array.isArray(va) ? va : [];
+    serviceCategoryLookupRecords = Array.isArray(sc) ? sc : [];
+  } catch (e) {
+    console.warn("refreshLookupOptionCaches failed", e);
+  }
+}
+
+function labelsForLookupRecord(rec) {
+  if (!rec || typeof rec !== "object") return [];
+  const labels = [];
+  const add = v => {
+    if (v == null) return;
+    const s = String(v).trim();
+    if (s) labels.push(s);
+  };
+  add(rec.name);
+  add(rec.displayName);
+  for (const k of Object.keys(rec)) {
+    if (k === "id" || k === "moduleState") continue;
+    const v = rec[k];
+    if (typeof v === "string" && /name|title|label|subject|record_name/i.test(k)) add(v);
+  }
+  if (!labels.length) {
+    for (const v of Object.values(rec)) {
+      if (typeof v === "string" && v.trim().length > 1 && !/^\d+$/.test(v.trim())) add(v);
+    }
+  }
+  return [...new Set(labels)];
+}
+
+function findLookupRecordIdByDisplayText(displayValue, records) {
+  const raw = String(displayValue ?? "").trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+  const lc = normalizedKey(raw);
+  for (const rec of records) {
+    const id = rec?.id;
+    if (id == null) continue;
+    for (const label of labelsForLookupRecord(rec)) {
+      if (label === raw) return id;
+      if (normalizedKey(label) === lc) return id;
+    }
+  }
+  for (const rec of records) {
+    const id = rec?.id;
+    if (id == null) continue;
+    for (const label of labelsForLookupRecord(rec)) {
+      const nl = normalizedKey(label);
+      if (!nl || nl.length < 5 || lc.length < 5) continue;
+      if (lc.includes(nl) || nl.includes(lc)) return id;
+    }
+  }
+  return null;
+}
+
+function resolveValueAchievedLookupId(text) {
+  const fromApi = findLookupRecordIdByDisplayText(text, valueAchievedLookupRecords);
+  if (fromApi != null) return fromApi;
+  return lookupIdFromValue(text, LOOKUP_ID_MAP_FALLBACK.valueMonthPerformance);
+}
+
+function resolveServiceCategoryLookupId(text) {
+  const fromApi = findLookupRecordIdByDisplayText(text, serviceCategoryLookupRecords);
+  if (fromApi != null) return fromApi;
+  return lookupIdFromValue(text, LOOKUP_ID_MAP_FALLBACK.serviceCategory);
+}
+
+function lookupObjectFromResolvedValue(displayValue, resolveFn) {
+  const id = resolveFn(displayValue);
+  return id != null ? { id } : displayValue;
+}
+
+/*
+  Picklists: tenant expects option index as number (1,2,3…), not { id } — see Facilio / form config.
+  - applicable: Applicable=1, Not Applicable=2
+  - level: High=1, Medium=2, Low=3
+*/
+const PICKLIST_ID_MAP = {
+  applicable: {
+    Applicable: 1,
+    "Not Applicable": 2
+  },
+  levelOfImportance: {
+    High: 1,
+    Medium: 2,
+    Low: 3
+  }
+};
+
+function normalizedKey(v) {
+  return String(v == null ? "" : v).trim().toLowerCase();
+}
+
+function lookupIdFromValue(value, idMap) {
+  const raw = String(value == null ? "" : value).trim();
+  if (!raw) return null;
+  const direct = idMap?.[raw];
+  if (direct != null) return direct;
+  const lc = normalizedKey(raw);
+  const matched = Object.entries(idMap || {}).find(([k]) => normalizedKey(k) === lc);
+  if (matched && matched[1] != null) return matched[1];
+  const fuzzy = Object.entries(idMap || {}).find(([k]) => {
+    const kk = normalizedKey(k);
+    return kk && (lc.includes(kk) || kk.includes(lc));
+  });
+  if (fuzzy && fuzzy[1] != null) return fuzzy[1];
+  if (/^\d+$/.test(raw)) return parseInt(raw, 10);
+  return null;
+}
+
+function picklistValueFromLabel(value, idMap) {
+  const n = lookupIdFromValue(value, idMap);
+  if (n != null) return n;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const s = String(value == null ? "" : value).trim();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return value;
+}
+
+/**
+ * Facilio Data API list fetch; falls back to REST GET.
+ * @see https://facilio.com/developers/docs/connected-apps/sdk-reference/api/
+ */
+async function fetchModuleList(moduleLinkName, perPage) {
+  const n = perPage || 100;
+  const apiLayer = window.facilioApp?.api;
+  if (typeof apiLayer?.fetchAll === "function") {
+    try {
+      const res = await apiLayer.fetchAll(moduleLinkName, {
+        viewName: "all",
+        page: 1,
+        perPage: n
+      });
+      if (res?.error) {
+        console.warn(`fetchAll(${moduleLinkName}):`, res.error);
+        return [];
+      }
+      return Array.isArray(res.list) ? res.list : [];
+    } catch (e) {
+      console.warn(`fetchAll(${moduleLinkName}) failed, trying REST`, e);
+    }
+  }
+  if (!window.facilioApp?.request?.invokeFacilioAPI) return [];
+  try {
+    const res = await window.facilioApp.request.invokeFacilioAPI(
+      `/v3/modules/${moduleLinkName}/view/all?page=1&perPage=${n}`,
+      { method: "GET" }
+    );
+    const d = res?.data?.data;
+    if (Array.isArray(d)) return d;
+    const named = res?.data?.[moduleLinkName];
+    if (Array.isArray(named)) return named;
+    return [];
+  } catch (err) {
+    console.warn(`Could not load ${moduleLinkName}; master KPI values left as-is.`, err);
+    return [];
+  }
+}
+
+async function facilioUpdateRecord(moduleLinkName, id, patchData) {
+  const numericId =
+    typeof id === "string" && /^\d+$/.test(String(id)) ? parseInt(id, 10) : Number(id);
+  const apiLayer = window.facilioApp?.api;
+  if (typeof apiLayer?.updateRecord === "function") {
+    const res = await apiLayer.updateRecord(moduleLinkName, { id: numericId, data: patchData });
+    if (res?.error) {
+      const err = res.error;
+      throw new Error(typeof err === "string" ? err : err.message || JSON.stringify(err));
+    }
+    if (res?.code != null && res.code !== 0) {
+      throw new Error(`Facilio updateRecord failed (code ${res.code})`);
+    }
+    return res;
+  }
+  const bound = window.facilioApp?.request?.invokeFacilioAPI?.bind(window.facilioApp.request);
+  if (!bound) throw new Error("Facilio SDK: no api.updateRecord or request.invokeFacilioAPI");
+  const bodies = [
+    JSON.stringify({ data: patchData, moduleName: moduleLinkName }),
+    JSON.stringify({ data: patchData })
+  ];
+  let lastErr = null;
+  for (const body of bodies) {
+    try {
+      return await bound(`/v3/modules/${moduleLinkName}/${numericId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body
+      });
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  if (lastErr) throw lastErr;
+}
+
+async function persistKpiMetricsToMaster(updates) {
+  if (!enableServiceAggregatesSave || !updates.length) return;
+
+  const merged = mergeKpiUpdatesById(updates);
+  const results = await Promise.allSettled(
+    merged.map(u => facilioUpdateRecord(KPI_MASTER_MODULE_NAME, u.id, u.payload))
+  );
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
+      const id = merged[i]?.id;
+      console.warn(`KPI master persist failed for id ${id}:`, r.reason);
+    }
+  });
+}
+
+async function fetchChildModuleRows(moduleLinkName) {
+  return fetchModuleList(moduleLinkName, 1000);
+}
+
+async function refreshKpiListData() {
+  if (USE_STATIC_PROTOTYPE_LIST) {
+    summaryExportChildRowsByModule = buildStaticPrototypeSummarySubmoduleRowsByModule();
+    summaryExportChildRowsKpiId = null;
+    data = buildStaticPrototypeListRows();
+    renderTable();
+    return;
+  }
+  const kpiRecords = await fetchModuleList(KPI_MASTER_MODULE_NAME, 100);
+
+  const allUpdates = [];
+  let records = kpiRecords;
+
+  for (const spec of SUBFORM_UI_SPECS) {
+    const fields = serviceFieldLinkNames(spec.moduleLinkName);
+    const rows = await fetchChildModuleRows(spec.moduleLinkName);
+    const aggMap = buildServiceAggregateByKpiId(rows, fields);
+    const { records: next, updates } = computeServiceMetricsForKpiRecords(
+      records,
+      aggMap,
+      spec.summaryCode
+    );
+    records = next;
+    allUpdates.push(...updates);
+  }
+
+  const { records: withPerf, updates: perfUpdates } = mergePerformanceIndicatorUpdates(records);
+  records = withPerf;
+  allUpdates.push(...perfUpdates);
+
+  await persistKpiMetricsToMaster(allUpdates);
+
+  data = records.map(mapApiItemToRow);
+  renderTable();
+}
+
+function getSummaryMetric(code, metric, record) {
+  const prototypeMetric = record?.__prototypeMetrics?.[code]?.[metric];
+  if (prototypeMetric != null) return safeNumber(prototypeMetric);
+  const sn = summaryFieldLinkNames[code];
+  if (!sn) return 0;
+  const { weight: wL, grade: gL, result: rL } = sn;
+  const colocatedWG = wL === gL;
+
+  if (metric === "weight") {
+    if (colocatedWG) return DEFAULT_WEIGHT_FALLBACK[code] ?? 0;
+    return safeNumber(record?.[wL]) || DEFAULT_WEIGHT_FALLBACK[code] || 0;
+  }
+  if (metric === "grade") {
+    return safeNumber(record?.[gL]);
+  }
+  if (metric === "result") {
+    const storedG = safeNumber(record?.[gL]);
+    if (rL === gL) {
+      const w =
+        colocatedWG
+          ? DEFAULT_WEIGHT_FALLBACK[code] ?? 0
+          : safeNumber(record?.[wL]) || DEFAULT_WEIGHT_FALLBACK[code] || 0;
+      if (w > 0) return round2((storedG * 100) / w);
+      return round2(storedG);
+    }
+    return safeNumber(record?.[rL]);
+  }
+  return 0;
+}
+
+/* List column → same service code as summary (SS=Light, OM=Operational, HS=Heavy, CM=Contract) */
+const listColumnToSummaryCode = {
+  light: "SS",
+  operational: "OM",
+  heavy: "HS",
+  contract: "CM"
+};
+
+function listMetric(item, listCategory, which) {
+  const code = listColumnToSummaryCode[listCategory];
+  if (!code) return 0;
+  const metric = which === "gradeAchieved" ? "grade" : which === "weightPercent" ? "weight" : null;
+  if (!metric) return 0;
+  return getSummaryMetric(code, metric, item);
+}
+
+/* List: "27 Mar 2026" — summary header uses dateRaw + getMonthAndDateLabelFromTs */
+function formatDate(ts) {
+  if (!ts) return "-";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * rowsPerPage;
+  const rows = data.slice(start, start + rowsPerPage);
+
+  const body = document.getElementById("tableBody");
+  body.innerHTML = "";
+
+  rows.forEach(row => {
+    body.innerHTML += `
+      <div class="table-row" onclick="void handleRowClick('${row.id}')">
+
+        <div class="id-cell">#${row.id}</div>
+        <div>${row.date}</div>
+        <div>${row.area}</div>
+
+        <div class="performance-cell">
+          <div class="perf-value">${row.performance}%</div>
+          <div class="progress-bar">
+            <div class="progress-fill" 
+              style="width: ${Math.min(row.performance, 100)}%; 
+              background: ${getBarColor(row.performance)}">
+            </div>
+          </div>
+        </div>
+
+        <div class="${getKpiCellClass(row.light, row.lightTarget)}">${formatPercent(row.light, row.lightTarget)}</div>
+        <div class="${getKpiCellClass(row.op, row.opTarget)}">${formatPercent(row.op, row.opTarget)}</div>
+        <div class="${getKpiCellClass(row.heavy, row.heavyTarget)}">${formatPercent(row.heavy, row.heavyTarget)}</div>
+        <div class="${getKpiCellClass(row.contract, row.contractTarget)}">${formatPercent(row.contract, row.contractTarget)}</div>
+
+        <div class="link">${row.workOrder}</div>
+
+      </div>
+    `;
+  });
+
+  document.getElementById("pageInfo").innerText =
+    `Page ${currentPage} of ${Math.ceil(data.length / rowsPerPage)}`;
+
+  document.getElementById("recordCount").innerText =
+    `${start + 1}-${Math.min(start + rowsPerPage, data.length)} of ${data.length} records`;
+}
+
+function formatPercent(val, target) {
+  val = val || 0;
+  target = target || 0;
+
+  let percent = target > 0 ? (val / target) * 100 : 0;
+
+  let colorClass = "";
+
+  if (percent >= 95) {
+    colorClass = "green";
+  } else if (percent >= 85) {
+    colorClass = "orange";
+  } else {
+    colorClass = "red";
+  }
+
+  return `
+    <span class="${colorClass}">${val}%</span>
+    <span class="target"> (${target}%)</span>
+  `;
+}
+
+function getBarColor(val) {
+  if (val >= 95) return "#16a34a";
+  if (val >= 85) return "#f59e0b";
+  return "#f43f5e";
+}
+
+/* Row cell colour from achieved vs weight (same bands as formatPercent). */
+function getKpiCellClass(achieved, weight) {
+  const w = safeNumber(weight);
+  const a = safeNumber(achieved);
+  const pct = w > 0 ? (a / w) * 100 : 0;
+  if (pct >= 95) return "green";
+  if (pct >= 85) return "orange";
+  return "red";
+}
+
+/* Same key map as list / legend: grade vs weight ratio → Excellent / Medium / Weak */
+function getSummaryRowBand(weight, grade) {
+  const key = getKpiCellClass(grade, weight);
+  if (key === "green") return "excellent";
+  if (key === "orange") return "medium";
+  return "weak";
+}
+
+function nextPage() {
+  if (currentPage < Math.ceil(data.length / rowsPerPage)) {
+    currentPage++;
+    renderTable();
+  }
+}
+
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+  }
+}
+
+async function handleRowClick(id) {
+  await openSummary(id);
+}
+
+function getPerformanceBand(value) {
+  const numeric = safeNumber(value);
+  if (numeric >= 95) {
+    return {
+      label: "Excellent",
+      badgeBg: "#dcfce7",
+      badgeBorder: "#86efac",
+      badgeText: "#166534",
+      cardBg: "#f0fdf4",
+      cardBorder: "#bbf7d0"
+    };
+  }
+  if (numeric >= 85) {
+    return {
+      label: "Medium",
+      badgeBg: "#fef3c7",
+      badgeBorder: "#fcd34d",
+      badgeText: "#92400e",
+      cardBg: "#fffbeb",
+      cardBorder: "#fde68a"
+    };
+  }
+  return {
+    label: "Weak",
+    badgeBg: "#ffe4e6",
+    badgeBorder: "#fda4af",
+    badgeText: "#be123c",
+    cardBg: "#fff1f2",
+    cardBorder: "#fecdd3"
+  };
+}
+
+function getMonthAndDateLabel(displayDate) {
+  if (!displayDate || displayDate === "-") return "-";
+  const parts = displayDate.split("/");
+  if (parts.length !== 3) return displayDate;
+
+  const day = Number(parts[0]);
+  const month = Number(parts[1]);
+  const year = Number(parts[2]);
+
+  const parsed = new Date(year, month - 1, day);
+  if (Number.isNaN(parsed.getTime())) return displayDate;
+
+  const monthLabel = parsed.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const dateLabel = parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  return `${monthLabel} | ${dateLabel}`;
+}
+
+function getMonthAndDateLabelFromTs(ts) {
+  if (ts == null || ts === "") return "-";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "-";
+  const monthLabel = d.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const dateLabel = d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+  return `${monthLabel} | ${dateLabel}`;
+}
+
+function csvEscapeCell(val) {
+  const s = String(val == null ? "" : val).replace(/"/g, '""');
+  return /[",\n\r]/.test(s) ? `"${s}"` : s;
+}
+
+function excelBandArgb(band) {
+  const m = {
+    excellent: { fill: "FFDCFCE7", font: "FF166534" },
+    medium: { fill: "FFFEF3C7", font: "FF92400E" },
+    weak: { fill: "FFFFE4E6", font: "FFBE123C" }
+  };
+  return m[band] || m.weak;
+}
+
+function excelApplyBand(cell, band, fontSize) {
+  const { fill, font } = excelBandArgb(band);
+  cell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: fill }
+  };
+  cell.font = {
+    bold: true,
+    color: { argb: font },
+    size: fontSize != null ? fontSize : 11
+  };
+}
+
+/** Same column order as the create-form subtables (excluding the Delete column). */
+const SUMMARY_SUBFORM_COLUMN_HEADERS = [
+  "Grade %",
+  "Entrance No. 2 (Maqam)",
+  "Entrance No. 1 (Typography)",
+  "Value achieved in the current month Performance",
+  "Required Data",
+  "Source",
+  "Objective",
+  "Index Measurement Formula",
+  "Description",
+  "Level of Importance",
+  "Indicator",
+  "Service Category",
+  "Performance ID",
+  "Applicable / Not Applicable"
+];
+
+function displayApplicableFromApi(v) {
+  const n = safeNumber(v);
+  if (n === 1) return "Applicable";
+  if (n === 2) return "Not Applicable";
+  const s = picklistDisplay(v).trim();
+  return s || String(v ?? "");
+}
+
+function displayLevelFromApi(v) {
+  const n = safeNumber(v);
+  if (n === 1) return "High";
+  if (n === 2) return "Medium";
+  if (n === 3) return "Low";
+  const s = picklistDisplay(v).trim();
+  return s || String(v ?? "");
+}
+
+function displayLookupOrPlain(v) {
+  if (v == null) return "";
+  if (typeof v === "object") {
+    const s = picklistDisplay(v).trim();
+    if (s) return s;
+    if (v.id != null) return String(v.id);
+    return "";
+  }
+  return String(v);
+}
+
+function childApiRowToCellValues(moduleLinkName, row) {
+  const F = serviceFieldLinkNames(moduleLinkName);
+  const gi = apiChildRowForGradeCompute(row, F);
+  let gradePct = computeRowGradePercent(gi);
+  if (gradePct == null) {
+    const gs = safeNumber(row?.[F.gradeCredited]);
+    gradePct = gs > 0 ? gs : null;
+  }
+  const gStr = gradePct == null ? "—" : String(gradePct);
+  const no2 = resolveEntranceFieldFromApiRow(row, moduleLinkName, 2);
+  const no1 = resolveEntranceFieldFromApiRow(row, moduleLinkName, 1);
+  const fmt = v =>
+    v === undefined || v === null || v === "" ? "" : String(unwrapFacilioFieldValue(v) ?? v);
+  return [
+    gStr,
+    fmt(no2),
+    fmt(no1),
+    displayLookupOrPlain(row[F.valueMonthPerformance]),
+    String(row[F.requiredData] ?? ""),
+    String(row[F.source] ?? ""),
+    String(row[F.objective] ?? ""),
+    String(row[F.indexMeasurementFormula] ?? ""),
+    String(row[F.description] ?? ""),
+    displayLevelFromApi(row[F.levelOfImportance]),
+    String(row[F.indicator] ?? ""),
+    displayLookupOrPlain(row[F.serviceCategory]),
+    String(row[F.performanceId] ?? ""),
+    displayApplicableFromApi(row[F.applicable])
+  ];
+}
+
+async function fetchChildRowsForKpiMaster(kpiId) {
+  const out = {};
+  for (const spec of SUBFORM_UI_SPECS) {
+    const mod = spec.moduleLinkName;
+    const fields = serviceFieldLinkNames(mod);
+    const list = await fetchModuleList(mod, 1200);
+    const rows = Array.isArray(list) ? list : [];
+    out[mod] = rows.filter(r =>
+      kpiParentIdsEqual(extractKpiParentIdFromChildRow(r, fields), kpiId)
+    );
+  }
+  return out;
+}
+
+function renderSummarySubmoduleTables(hostEl, byModule) {
+  let html = "";
+  SUBFORM_UI_SPECS.forEach(spec => {
+    const modRows = byModule[spec.moduleLinkName] || [];
+    html += `<div class="summary-submodule-block">`;
+    html += `<div class="summary-submodule-title">${escapeHtmlText(spec.title)}</div>`;
+    html += `<div class="summary-submodule-scroll">`;
+    html += `<table class="summary-submodule-table"><thead><tr>`;
+    SUMMARY_SUBFORM_COLUMN_HEADERS.forEach(h => {
+      html += `<th>${escapeHtmlText(h)}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+    if (!modRows.length) {
+      html += `<tr><td class="summary-submodule-empty" colspan="${SUMMARY_SUBFORM_COLUMN_HEADERS.length}">No rows linked to this KPI.</td></tr>`;
+    } else {
+      modRows.forEach(r => {
+        const cells = childApiRowToCellValues(spec.moduleLinkName, r);
+        html += `<tr>`;
+        cells.forEach(c => {
+          html += `<td>${escapeHtmlText(c)}</td>`;
+        });
+        html += `</tr>`;
+      });
+    }
+    html += `</tbody></table></div></div>`;
+  });
+  hostEl.innerHTML = html;
+}
+
+function excelAllocateSheetName(base, usedNames) {
+  let s = String(base || "Sheet")
+    .replace(/[:\\/?*\[\]]/g, "-")
+    .trim()
+    .substring(0, 31);
+  if (!s) s = "Sheet";
+  let candidate = s;
+  let n = 1;
+  while (usedNames.has(candidate)) {
+    const suffix = `_${n}`;
+    candidate = (s.substring(0, 31 - suffix.length) + suffix).substring(0, 31);
+    n += 1;
+  }
+  usedNames.add(candidate);
+  return candidate;
+}
+
+function addSubmoduleSheetsToWorkbook(wb, byModule) {
+  const used = new Set(wb.worksheets.map(w => w.name));
+  SUBFORM_UI_SPECS.forEach(spec => {
+    const sheetName = excelAllocateSheetName(`${spec.summaryCode} ${spec.title}`, used);
+    const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: true }] });
+    let r = 1;
+    const titleCell = ws.getCell(r, 1);
+    titleCell.value = spec.title;
+    titleCell.font = { bold: true, size: 13 };
+    r += 2;
+    const hr = ws.getRow(r);
+    SUMMARY_SUBFORM_COLUMN_HEADERS.forEach((h, i) => {
+      const c = hr.getCell(i + 1);
+      c.value = h;
+      c.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF6B5CA5" }
+      };
+      c.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+      c.alignment = { vertical: "middle", horizontal: "left", wrapText: true };
+    });
+    r += 1;
+    const dataRows = byModule[spec.moduleLinkName] || [];
+    if (!dataRows.length) {
+      ws.getCell(r, 1).value = "No rows linked to this KPI.";
+      r += 1;
+    } else {
+      dataRows.forEach(apiRow => {
+        const vals = childApiRowToCellValues(spec.moduleLinkName, apiRow);
+        const row = ws.getRow(r);
+        vals.forEach((v, i) => {
+          const cell = row.getCell(i + 1);
+          cell.value = v;
+          cell.alignment = { wrapText: true, vertical: "top" };
+        });
+        r += 1;
+      });
+    }
+    for (let col = 1; col <= SUMMARY_SUBFORM_COLUMN_HEADERS.length; col++) {
+      ws.getColumn(col).width = 22;
+    }
+  });
+}
+
+function xmlEscapeCell(val) {
+  return String(val == null ? "" : val)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildSpreadsheetMlWorksheetXml(name, rows) {
+  const rowXml = rows
+    .map(row => {
+      const cells = row
+        .map(cell => `<Cell><Data ss:Type="String">${xmlEscapeCell(cell)}</Data></Cell>`)
+        .join("");
+      return `<Row>${cells}</Row>`;
+    })
+    .join("");
+  return `<Worksheet ss:Name="${xmlEscapeCell(name)}"><Table>${rowXml}</Table></Worksheet>`;
+}
+
+async function exportSummaryAsExcelXmlFallback() {
+  if (lastSummaryRecordId == null) return;
+  const selectedRow = data.find(r => String(r.id) === String(lastSummaryRecordId));
+  if (!selectedRow) return;
+
+  const band = getPerformanceBand(selectedRow.performance);
+  const recordSource = {
+    ...summaryDummyRecordByLinkName,
+    ...(selectedRow.rawRecord || {})
+  };
+
+  let totalWeight = 0;
+  let totalGrade = 0;
+  let totalResult = 0;
+  const summaryRows = [
+    ["KPI Summary"],
+    ["Record ID", `#${selectedRow.id}`],
+    ["Record name", selectedRow.recordName || ""],
+    ["Period", getMonthAndDateLabel(selectedRow.date) || "-"],
+    [],
+    ["Contractor", selectedRow.contractor || "-"],
+    ["Area", selectedRow.area || "-"],
+    ["Work Order", selectedRow.workOrder || "-"],
+    ["Project Number", selectedRow.projectNumber || "-"],
+    [],
+    ["Performance Indicator (%)", String(safeNumber(selectedRow.performance))],
+    ["Performance band", band.label],
+    [],
+    [
+      "Service Category Code",
+      "Service Category Offered",
+      "Weight (%)",
+      "Total Grade Achieved (%)",
+      "Equation Result"
+    ]
+  ];
+
+  summaryServiceCategories.forEach(service => {
+    const weight = getSummaryMetric(service.code, "weight", recordSource);
+    const grade = getSummaryMetric(service.code, "grade", recordSource);
+    const result = getSummaryMetric(service.code, "result", recordSource);
+    totalWeight += weight;
+    totalGrade += grade;
+    totalResult += result;
+    summaryRows.push([service.code, service.name, String(weight), String(grade), String(result)]);
+  });
+
+  const prototypeTotals = recordSource?.__prototypeTotals;
+  if (prototypeTotals) {
+    totalWeight = safeNumber(prototypeTotals.weight);
+    totalGrade = safeNumber(prototypeTotals.grade);
+    totalResult = safeNumber(prototypeTotals.result);
+  }
+  summaryRows.push(["Total", "", String(totalWeight), String(totalGrade), String(totalResult)]);
+
+  let byModule =
+    summaryExportChildRowsByModule ||
+    (USE_STATIC_PROTOTYPE_LIST ? buildStaticPrototypeSummarySubmoduleRowsByModule() : null);
+  if (!USE_STATIC_PROTOTYPE_LIST && (!byModule || String(summaryExportChildRowsKpiId) !== String(selectedRow.id))) {
+    byModule = await fetchChildRowsForKpiMaster(selectedRow.id);
+  }
+  byModule = byModule || {};
+
+  const used = new Set();
+  const sheets = [
+    buildSpreadsheetMlWorksheetXml(excelAllocateSheetName("KPI Summary", used), summaryRows)
+  ];
+
+  SUBFORM_UI_SPECS.forEach(spec => {
+    const rows = [[spec.title], [], SUMMARY_SUBFORM_COLUMN_HEADERS];
+    const modRows = byModule[spec.moduleLinkName] || [];
+    if (!modRows.length) {
+      rows.push(["No rows linked to this KPI."]);
+    } else {
+      modRows.forEach(r => rows.push(childApiRowToCellValues(spec.moduleLinkName, r)));
+    }
+    sheets.push(
+      buildSpreadsheetMlWorksheetXml(
+        excelAllocateSheetName(`${spec.summaryCode} ${spec.title}`, used),
+        rows
+      )
+    );
+  });
+
+  const workbookXml =
+    `<?xml version="1.0"?>` +
+    `<?mso-application progid="Excel.Sheet"?>` +
+    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ` +
+    `xmlns:o="urn:schemas-microsoft-com:office:office" ` +
+    `xmlns:x="urn:schemas-microsoft-com:office:excel" ` +
+    `xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ` +
+    `xmlns:html="http://www.w3.org/TR/REC-html40">` +
+    sheets.join("") +
+    `</Workbook>`;
+
+  const blob = new Blob([workbookXml], {
+    type: "application/vnd.ms-excel;charset=utf-8;"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `KPI_Summary_${selectedRow.id}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function exportSummaryAsCsvFallback() {
+  if (lastSummaryRecordId == null) return;
+  const selectedRow = data.find(r => String(r.id) === String(lastSummaryRecordId));
+  if (!selectedRow) return;
+
+  const band = getPerformanceBand(selectedRow.performance);
+  const recordSource = {
+    ...summaryDummyRecordByLinkName,
+    ...(selectedRow.rawRecord || {})
+  };
+
+  const lines = [];
+  lines.push(["KPI Summary"]);
+  lines.push(["Record ID", `#${selectedRow.id}`]);
+  lines.push(["Record name", selectedRow.recordName || ""]);
+  lines.push(["Period", getMonthAndDateLabel(selectedRow.date) || "-"]);
+  lines.push([]);
+  lines.push(["Contractor", selectedRow.contractor || "-"]);
+  lines.push(["Area", selectedRow.area || "-"]);
+  lines.push(["Work Order", selectedRow.workOrder || "-"]);
+  lines.push(["Project Number", selectedRow.projectNumber || "-"]);
+  lines.push([]);
+  lines.push(["Performance Indicator (%)", String(safeNumber(selectedRow.performance))]);
+  lines.push(["Performance band", band.label]);
+  lines.push([]);
+  lines.push([
+    "Service Category Code",
+    "Service Category Offered",
+    "Weight (%)",
+    "Total Grade Achieved (%)",
+    "Equation Result"
+  ]);
+
+  let totalWeight = 0;
+  let totalGrade = 0;
+  let totalResult = 0;
+
+  summaryServiceCategories.forEach(service => {
+    const weight = getSummaryMetric(service.code, "weight", recordSource);
+    const grade = getSummaryMetric(service.code, "grade", recordSource);
+    const result = getSummaryMetric(service.code, "result", recordSource);
+    totalWeight += weight;
+    totalGrade += grade;
+    totalResult += result;
+    lines.push([service.code, service.name, String(weight), String(grade), String(result)]);
+  });
+
+  const prototypeTotals = recordSource?.__prototypeTotals;
+  if (prototypeTotals) {
+    totalWeight = safeNumber(prototypeTotals.weight);
+    totalGrade = safeNumber(prototypeTotals.grade);
+    totalResult = safeNumber(prototypeTotals.result);
+  }
+
+  lines.push(["Total", "", String(totalWeight), String(totalGrade), String(totalResult)]);
+
+  let byModuleCsv =
+    summaryExportChildRowsByModule ||
+    (USE_STATIC_PROTOTYPE_LIST ? buildStaticPrototypeSummarySubmoduleRowsByModule() : null);
+  if (!USE_STATIC_PROTOTYPE_LIST && (!byModuleCsv || String(summaryExportChildRowsKpiId) !== String(selectedRow.id))) {
+    byModuleCsv = await fetchChildRowsForKpiMaster(selectedRow.id);
+  }
+  for (const spec of SUBFORM_UI_SPECS) {
+    lines.push([]);
+    lines.push([`${spec.title} (line items)`]);
+    lines.push(SUMMARY_SUBFORM_COLUMN_HEADERS);
+    const modRows = byModuleCsv[spec.moduleLinkName] || [];
+    if (!modRows.length) {
+      lines.push(["No rows linked to this KPI."]);
+    } else {
+      modRows.forEach(r => lines.push(childApiRowToCellValues(spec.moduleLinkName, r)));
+    }
+  }
+
+  const csv = "\uFEFF" + lines.map(row => row.map(csvEscapeCell).join(",")).join("\r\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `KPI_Summary_${selectedRow.id}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function exportSummaryToExcel() {
+  if (lastSummaryRecordId == null) return;
+  const selectedRow = data.find(r => String(r.id) === String(lastSummaryRecordId));
+  if (!selectedRow) return;
+
+  if (typeof ExcelJS === "undefined") {
+    await exportSummaryAsExcelXmlFallback();
+    return;
+  }
+
+  const perfBand = getPerformanceBand(selectedRow.performance);
+  const recordSource = {
+    ...summaryDummyRecordByLinkName,
+    ...(selectedRow.rawRecord || {})
+  };
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("KPI Summary", { views: [{ showGridLines: true }] });
+
+  let r = 1;
+  const title = ws.getCell(r, 1);
+  title.value = "KPI Summary";
+  title.font = { bold: true, size: 14 };
+  r += 1;
+
+  const meta = [
+    ["Record ID", `#${selectedRow.id}`],
+    ["Record name", selectedRow.recordName || ""],
+    ["Period", getMonthAndDateLabel(selectedRow.date) || "-"],
+    ["", ""],
+    ["Contractor", selectedRow.contractor || "-"],
+    ["Area", selectedRow.area || "-"],
+    ["Work Order", selectedRow.workOrder || "-"],
+    ["Project Number", selectedRow.projectNumber || "-"],
+    ["", ""],
+    ["Performance Indicator (%)", safeNumber(selectedRow.performance)],
+    ["Performance band", perfBand.label]
+  ];
+
+  meta.forEach(([a, b]) => {
+    ws.getCell(r, 1).value = a;
+    ws.getCell(r, 2).value = b;
+    if (a) ws.getCell(r, 1).font = { bold: true };
+    r += 1;
+  });
+
+  r += 1;
+  const headers = [
+    "Service Category Code",
+    "Service Category Offered",
+    "Weight (%)",
+    "Total Grade Achieved (%)",
+    "Equation Result"
+  ];
+  const hr = ws.getRow(r);
+  headers.forEach((h, i) => {
+    const c = hr.getCell(i + 1);
+    c.value = h;
+    c.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF6B5CA5" }
+    };
+    c.font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+    c.alignment = { vertical: "middle", horizontal: "left" };
+  });
+  r += 1;
+
+  let totalWeight = 0;
+  let totalGrade = 0;
+  let totalResult = 0;
+
+  summaryServiceCategories.forEach(service => {
+    const weight = getSummaryMetric(service.code, "weight", recordSource);
+    const grade = getSummaryMetric(service.code, "grade", recordSource);
+    const result = getSummaryMetric(service.code, "result", recordSource);
+    totalWeight += weight;
+    totalGrade += grade;
+    totalResult += result;
+
+    const rowBand = getSummaryRowBand(weight, grade);
+    const row = ws.getRow(r);
+
+    const c1 = row.getCell(1);
+    c1.value = service.code;
+    c1.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFEDE9FE" }
+    };
+    c1.font = { bold: true, color: { argb: "FF5B21B6" } };
+    c1.alignment = { horizontal: "left" };
+
+    row.getCell(2).value = service.name;
+    row.getCell(2).alignment = { horizontal: "left" };
+
+    const c3 = row.getCell(3);
+    c3.value = `${weight}%`;
+    c3.alignment = { horizontal: "left" };
+
+    const c4 = row.getCell(4);
+    c4.value = `${grade}%`;
+    excelApplyBand(c4, rowBand);
+
+    const c5 = row.getCell(5);
+    c5.value = result;
+    c5.alignment = { horizontal: "left" };
+
+    r += 1;
+  });
+
+  const prototypeTotals = recordSource?.__prototypeTotals;
+  if (prototypeTotals) {
+    totalWeight = safeNumber(prototypeTotals.weight);
+    totalGrade = safeNumber(prototypeTotals.grade);
+    totalResult = safeNumber(prototypeTotals.result);
+  }
+
+  const totalBand = getSummaryRowBand(totalWeight, totalGrade);
+  const tr = ws.getRow(r);
+  tr.getCell(1).value = "Total";
+  tr.getCell(2).value = "";
+  [1, 2, 3, 4, 5].forEach(ci => {
+    const c = tr.getCell(ci);
+    c.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF6B5CA5" }
+    };
+    c.font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  });
+  tr.getCell(3).value = `${totalWeight}%`;
+  tr.getCell(4).value = `${totalGrade}%`;
+  tr.getCell(5).value = totalResult;
+  excelApplyBand(tr.getCell(4), totalBand, 13);
+
+  ws.columns = [
+    { width: 22 },
+    { width: 30 },
+    { width: 16 },
+    { width: 26 },
+    { width: 18 }
+  ];
+
+  let byModule =
+    summaryExportChildRowsByModule ||
+    (USE_STATIC_PROTOTYPE_LIST ? buildStaticPrototypeSummarySubmoduleRowsByModule() : null);
+  if (!USE_STATIC_PROTOTYPE_LIST && (!byModule || String(summaryExportChildRowsKpiId) !== String(selectedRow.id))) {
+    byModule = await fetchChildRowsForKpiMaster(selectedRow.id);
+  }
+  addSubmoduleSheetsToWorkbook(wb, byModule || {});
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `KPI_Summary_${selectedRow.id}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+async function openSummary(id) {
+  lastSummaryRecordId = id;
+  const modal = document.getElementById("summaryModal");
+  modal.classList.add("show");
+  const selectedRow = data.find(row => String(row.id) === String(id));
+
+  const summaryRecordId = document.getElementById("summaryRecordId");
+  summaryRecordId.innerText = `#${selectedRow?.id || id}`;
+
+  const summaryRecordName = document.getElementById("summaryRecordName");
+  summaryRecordName.innerText =
+    displayRecordNameWithoutId(selectedRow?.recordName) || selectedRow?.area || "Record";
+
+  const headerMonthDate = document.getElementById("summaryHeaderMonthDate");
+  headerMonthDate.innerText =
+    selectedRow?.dateRaw != null && selectedRow?.dateRaw !== ""
+      ? getMonthAndDateLabelFromTs(selectedRow.dateRaw)
+      : getMonthAndDateLabel(selectedRow?.date);
+
+  const summaryPerformanceValue = document.getElementById("summaryPerformanceValue");
+  summaryPerformanceValue.innerText = `${safeNumber(selectedRow?.performance)}%`;
+  const band = getPerformanceBand(selectedRow?.performance);
+  const summaryPerformanceBand = document.getElementById("summaryPerformanceBand");
+  summaryPerformanceBand.innerText = band.label;
+  summaryPerformanceBand.style.background = "#ffffff";
+  summaryPerformanceBand.style.borderColor = "#dbe2ea";
+  summaryPerformanceBand.style.color = "#334155";
+  const summaryPerformanceBox = document.getElementById("summaryPerformanceBox");
+  summaryPerformanceBox.style.background = "#ffffff";
+  summaryPerformanceBox.style.borderColor = "transparent";
+
+  document.getElementById("summaryMetaContractor").innerText = selectedRow?.contractor || "-";
+  document.getElementById("summaryMetaArea").innerText = selectedRow?.area || "-";
+  document.getElementById("summaryMetaWorkOrder").innerText = selectedRow?.workOrder || "-";
+  document.getElementById("summaryMetaProjectNumber").innerText = selectedRow?.projectNumber || "-";
+
+  const body = document.getElementById("summaryTable");
+  body.innerHTML = "";
+
+  let totalWeight = 0;
+  let totalGrade = 0;
+  let totalResult = 0;
+
+  summaryServiceCategories.forEach(service => {
+    const recordSource = {
+      ...summaryDummyRecordByLinkName,
+      ...(selectedRow?.rawRecord || {})
+    };
+    const weight = getSummaryMetric(service.code, "weight", recordSource);
+    const grade = getSummaryMetric(service.code, "grade", recordSource);
+    const result = getSummaryMetric(service.code, "result", recordSource);
+
+    totalWeight += weight;
+    totalGrade += grade;
+    totalResult += result;
+
+    const rowBand = getSummaryRowBand(weight, grade);
+
+    body.innerHTML += `
+      <div class="summary-table-row">
+        <div class="summary-code-cell">
+          <span class="summary-code-badge">${service.code}</span>
+        </div>
+        <div>${service.name}</div>
+        <div>${weight}%</div>
+        <div><span class="summary-band-cell summary-band-${rowBand}">${grade}%</span></div>
+        <div>${result}</div>
+      </div>
+    `;
+  });
+
+  const prototypeTotals = selectedRow?.rawRecord?.__prototypeTotals;
+  if (prototypeTotals) {
+    totalWeight = safeNumber(prototypeTotals.weight);
+    totalGrade = safeNumber(prototypeTotals.grade);
+    totalResult = safeNumber(prototypeTotals.result);
+  }
+
+  const totalBand = getSummaryRowBand(totalWeight, totalGrade);
+
+  body.innerHTML += `
+    <div class="summary-table-total">
+      <div>Total</div>
+      <div></div>
+      <div class="summary-total-plain">${totalWeight}%</div>
+      <div><span class="summary-total-pill summary-band-${totalBand}">${totalGrade}%</span></div>
+      <div class="summary-total-plain">${totalResult}</div>
+    </div>
+  `;
+
+  const subHost = document.getElementById("summarySubmodulesHost");
+  if (subHost) {
+    if (USE_STATIC_PROTOTYPE_LIST) {
+      const staticByModule = buildStaticPrototypeSummarySubmoduleRowsByModule();
+      summaryExportChildRowsByModule = staticByModule;
+      summaryExportChildRowsKpiId = id;
+      renderSummarySubmoduleTables(subHost, staticByModule);
+    } else {
+      subHost.innerHTML = `<div class="summary-submodule-loading">Loading line items…</div>`;
+      try {
+        const byModule = await fetchChildRowsForKpiMaster(id);
+        summaryExportChildRowsByModule = byModule;
+        summaryExportChildRowsKpiId = id;
+        renderSummarySubmoduleTables(subHost, byModule);
+      } catch (e) {
+        console.error(e);
+        summaryExportChildRowsByModule = null;
+        summaryExportChildRowsKpiId = null;
+        subHost.innerHTML = `<div class="summary-submodule-error">Could not load line items: ${escapeHtmlText(
+          e?.message || String(e)
+        )}</div>`;
+      }
+    }
+  }
+}
+
+function closeSummary() {
+  const modal = document.getElementById("summaryModal");
+  modal.classList.remove("show");
+  const subHost = document.getElementById("summarySubmodulesHost");
+  if (subHost) subHost.innerHTML = "";
+}
+
+function toDatetimeLocalValue(d) {
+  const pad = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function syncCreateFormNameFromDateArea() {
+  if (createFormNameLockedByUser) return;
+  const dateIn = document.getElementById("createFormDateMonth")?.value;
+  const area = document.getElementById("createFormArea")?.value?.trim() || "";
+  let monthPart = "";
+  if (dateIn) {
+    const dt = new Date(dateIn);
+    if (!Number.isNaN(dt.getTime())) {
+      monthPart = dt.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    }
+  }
+  const nameEl = document.getElementById("createFormName");
+  if (nameEl) {
+    nameEl.value = [monthPart, area].filter(Boolean).join(" ").trim();
+  }
+}
+
+async function openCreateKpiModal() {
+  const modal = document.getElementById("createKpiModal");
+  if (!modal) return;
+  modal.classList.add("show");
+  if (!USE_STATIC_PROTOTYPE_LIST) {
+    await refreshLookupOptionCaches();
+  }
+  createFormNameLockedByUser = false;
+  document.getElementById("createFormArea").value = createFormDefaults.area;
+  document.getElementById("createFormContractor").value = createFormDefaults.contractor;
+  document.getElementById("createFormWorkOrder").value = createFormDefaults.workOrder;
+  document.getElementById("createFormProjectNumber").value = createFormDefaults.projectNumber;
+  document.getElementById("createFormLightAverage").value =
+    USE_STATIC_PROTOTYPE_LIST ? String(STATIC_PROTOTYPE_SERVICE_METRICS.SS.result) : "";
+  document.getElementById("createFormLightSize").value = "45";
+  document.getElementById("createFormDateMonth").value = toDatetimeLocalValue(
+    USE_STATIC_PROTOTYPE_LIST ? new Date(STATIC_PROTOTYPE_ROWS[0].dateMonth) : new Date()
+  );
+  if (USE_STATIC_PROTOTYPE_LIST) {
+    document.getElementById("createFormName").value = STATIC_PROTOTYPE_ROWS[0].recordName;
+  } else {
+    syncCreateFormNameFromDateArea();
+  }
+  initAllServiceSubRows();
+  if (!USE_STATIC_PROTOTYPE_LIST) {
+    setCreateFormOverlay(true, "Fetching row names from modules…");
+    try {
+      if (window.facilioApp?.api?.fetchAll || window.facilioApp?.request?.invokeFacilioAPI) {
+        await prefillSubformRowNamesFromLatestModuleRows();
+      }
+    } catch (e) {
+      console.warn("prefillSubformRowNamesFromLatestModuleRows", e);
+    } finally {
+      setCreateFormOverlay(false, "");
+    }
+  }
+  renderAllServiceSubforms();
+  bindCreateFormScrollSpy();
+  const scrollEl = document.getElementById("createMainScroll");
+  if (scrollEl) scrollEl.scrollTop = 0;
+  createFormActivateRailTab("main", true);
+}
+
+function closeCreateKpiModal() {
+  const modal = document.getElementById("createKpiModal");
+  if (modal) modal.classList.remove("show");
+}
+
+const CREATE_TAB_TO_SECTION = {
+  main: "createSectionMain",
+  light: "createSectionLight",
+  heavy: "createSectionHeavy",
+  contract: "createSectionContract",
+  operational: "createSectionOperational"
+};
+
+function createFormActivateRailTab(tabId, skipScroll) {
+  document.querySelectorAll(".create-rail-item[data-tab]").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-tab") === tabId);
+  });
+  if (skipScroll) return;
+  const scrollEl = document.getElementById("createMainScroll");
+  const sectionId = CREATE_TAB_TO_SECTION[tabId] || "createSectionMain";
+  const target = document.getElementById(sectionId);
+  if (scrollEl && target) {
+    const rectT = target.getBoundingClientRect();
+    const rectS = scrollEl.getBoundingClientRect();
+    const nextTop = rectT.top - rectS.top + scrollEl.scrollTop - 8;
+    scrollEl.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+  }
+}
+
+let createFormScrollSpyBound = false;
+function bindCreateFormScrollSpy() {
+  if (createFormScrollSpyBound) return;
+  const scrollEl = document.getElementById("createMainScroll");
+  if (!scrollEl) return;
+  createFormScrollSpyBound = true;
+  const tabOrder = ["main", "light", "heavy", "contract", "operational"];
+  scrollEl.addEventListener("scroll", () => {
+    const marker = scrollEl.scrollTop + 24;
+    let active = "main";
+    tabOrder.forEach(tab => {
+      const sectionId = CREATE_TAB_TO_SECTION[tab];
+      const section = document.getElementById(sectionId);
+      if (section && section.offsetTop <= marker) active = tab;
+    });
+    document.querySelectorAll(".create-rail-item[data-tab]").forEach(btn => {
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === active);
+    });
+  });
+}
+
+function escapeHtmlText(str) {
+  return String(str == null ? "" : str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttr(str) {
+  return escapeHtmlText(str).replace(/"/g, "&quot;");
+}
+
+function initAllServiceSubRows() {
+  SUBFORM_UI_SPECS.forEach((spec, idx) => {
+    const seeds = SERVICE_SEED_ROWS[spec.moduleLinkName];
+    if (seeds && seeds.length) {
+      createServiceSubRows[spec.moduleLinkName] = seeds.map(p => {
+        const r = rowFromSeed(p);
+        r.gradeCredited = computeRowGradePercent(r);
+        return r;
+      });
+      return;
+    }
+    const r1 = buildEmptyServiceRow(idx * 10 + 1);
+    r1.recordName = `${spec.title} — 1`;
+    const r2 = buildEmptyServiceRow(idx * 10 + 2);
+    r2.recordName = `${spec.title} — 2`;
+    createServiceSubRows[spec.moduleLinkName] = [r1, r2];
+  });
+}
+
+function renderAllServiceSubforms() {
+  SUBFORM_UI_SPECS.forEach(spec => renderServiceSubformRows(spec.moduleLinkName));
+}
+
+function maqamInputValue(row) {
+  if (row.maqam == null || row.maqam === "") return "";
+  return String(row.maqam);
+}
+
+function typoInputValue(row) {
+  if (row.typography == null || row.typography === "") return "";
+  return String(row.typography);
+}
+
+function renderServiceSubformRows(moduleLinkName) {
+  const spec = SUBFORM_UI_SPECS.find(s => s.moduleLinkName === moduleLinkName);
+  if (!spec) return;
+  const body = document.getElementById(spec.tbodyId);
+  if (!body) return;
+  const rows = createServiceSubRows[moduleLinkName] || [];
+  const m = moduleLinkName;
+  body.innerHTML = "";
+
+  rows.forEach((row, index) => {
+    row.gradeCredited = computeRowGradePercent(row);
+    const vPerfStr = escapeHtmlAttr(row.valueMonthPerformance);
+    const gStr = formatGradeCell(row.gradeCredited);
+    const app = row.applicable || "Applicable";
+    const lvl = row.levelOfImportance || "";
+    body.innerHTML += `
+      <tr>
+        <td><span id="subform-grade-${m}-${index}" class="subform-cell-inner subform-grade-readonly">${gStr}</span></td>
+        <td><span class="subform-cell-inner"><input data-field="maqam" type="number" step="any" name="maqam" value="${maqamInputValue(row)}" placeholder="Entrance No. 2 (Maqam)" autocomplete="off" oninput="updateSubformMaqamTypo('${m}',${index},this)" /></span></td>
+        <td><span class="subform-cell-inner"><input data-field="typography" type="number" step="any" name="typography" value="${typoInputValue(row)}" placeholder="Entrance No. 1 (Typography)" autocomplete="off" oninput="updateSubformMaqamTypo('${m}',${index},this)" /></span></td>
+        <td><span class="subform-cell-inner"><input data-field="valueMonthPerformance" type="text" value="${vPerfStr}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'valueMonthPerformance',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input data-field="requiredData" type="text" value="${escapeHtmlText(row.requiredData)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'requiredData',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.source)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'source',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.objective)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'objective',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.indexMeasurementFormula)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'indexMeasurementFormula',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><textarea autocomplete="off" oninput="updateSubformTextField('${m}',${index},'description',this.value)">${escapeHtmlText(row.description)}</textarea></span></td>
+        <td><span class="subform-cell-inner">
+          <select data-field="levelOfImportance" onchange="updateSubformPicklist('${m}',${index},'levelOfImportance',this.value)">
+            <option value="" ${lvl === "" ? "selected" : ""}>—</option>
+            <option value="High" ${lvl === "High" ? "selected" : ""}>High</option>
+            <option value="Medium" ${lvl === "Medium" ? "selected" : ""}>Medium</option>
+            <option value="Low" ${lvl === "Low" ? "selected" : ""}>Low</option>
+          </select>
+        </span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.indicator)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'indicator',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.serviceCategory)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'serviceCategory',this.value)" /></span></td>
+        <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.performanceId)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'performanceId',this.value)" /></span></td>
+        <td><span class="subform-cell-inner">
+          <select data-field="applicable" onchange="updateSubformPicklist('${m}',${index},'applicable',this.value)">
+            <option value="Applicable" ${app === "Applicable" ? "selected" : ""}>Applicable</option>
+            <option value="Not Applicable" ${app === "Not Applicable" ? "selected" : ""}>Not Applicable</option>
+          </select>
+        </span></td>
+        <td><button type="button" class="subform-del-btn" onclick="removeServiceSubRow('${m}',${index})">Delete</button></td>
+      </tr>
+    `;
+  });
+}
+
+function updateSubformMaqamTypo(moduleLinkName, index, inputEl) {
+  const rows = createServiceSubRows[moduleLinkName];
+  if (!rows || !rows[index]) return;
+  inputEl.classList.remove("field-error");
+  const name = inputEl.getAttribute("name");
+  const raw = inputEl.value;
+  if (name === "maqam") {
+    rows[index].maqam =
+      raw === "" || raw === "-" ? null : safeNumber(raw);
+  } else {
+    rows[index].typography =
+      raw === "" || raw === "-" ? null : safeNumber(raw);
+  }
+  rows[index].gradeCredited = computeRowGradePercent(rows[index]);
+  const cell = document.getElementById(`subform-grade-${moduleLinkName}-${index}`);
+  if (cell) cell.textContent = formatGradeCell(rows[index].gradeCredited);
+}
+
+function updateSubformPicklist(moduleLinkName, index, key, value) {
+  const rows = createServiceSubRows[moduleLinkName];
+  if (!rows || !rows[index]) return;
+  const spec = SUBFORM_UI_SPECS.find(s => s.moduleLinkName === moduleLinkName);
+  if (spec) {
+    const body = document.getElementById(spec.tbodyId);
+    const tr = body?.querySelectorAll("tr")?.[index];
+    const fieldEl = tr?.querySelector(`[data-field="${key}"]`);
+    if (fieldEl) fieldEl.classList.remove("field-error");
+  }
+  rows[index][key] = value;
+  if (key === "applicable") {
+    rows[index].gradeCredited = computeRowGradePercent(rows[index]);
+    const cell = document.getElementById(`subform-grade-${moduleLinkName}-${index}`);
+    if (cell) cell.textContent = formatGradeCell(rows[index].gradeCredited);
+  }
+}
+
+function updateSubformTextField(moduleLinkName, index, key, value) {
+  const rows = createServiceSubRows[moduleLinkName];
+  if (!rows || !rows[index]) return;
+  const spec = SUBFORM_UI_SPECS.find(s => s.moduleLinkName === moduleLinkName);
+  if (spec) {
+    const body = document.getElementById(spec.tbodyId);
+    const tr = body?.querySelectorAll("tr")?.[index];
+    const fieldEl = tr?.querySelector(`[data-field="${key}"]`);
+    if (fieldEl) fieldEl.classList.remove("field-error");
+  }
+  rows[index][key] = value;
+}
+
+function addServiceSubRow(moduleLinkName) {
+  const rows = createServiceSubRows[moduleLinkName];
+  if (!rows) return;
+  const n = buildEmptyServiceRow(rows.length + 1);
+  const spec = SUBFORM_UI_SPECS.find(s => s.moduleLinkName === moduleLinkName);
+  n.recordName = spec ? `${spec.title} — ${rows.length + 1}` : `Row ${rows.length + 1}`;
+  n.gradeCredited = computeRowGradePercent(n);
+  rows.push(n);
+  renderAllServiceSubforms();
+}
+
+function removeServiceSubRow(moduleLinkName, index) {
+  const rows = createServiceSubRows[moduleLinkName];
+  if (!rows || rows.length <= 1) return;
+  rows.splice(index, 1);
+  renderAllServiceSubforms();
+}
+
+function payloadValueAchievedForApi(v) {
+  if (v == null || v === "") return "";
+  const s = String(v).trim();
+  if (s && /[a-zA-Z\u0600-\u06FF]/.test(s)) return s;
+  return safeNumber(v);
+}
+
+function childPayloadFromServiceRow(moduleLinkName, row, createdId, includeKpiLookup) {
+  const LN = serviceFieldLinkNames(moduleLinkName);
+  const appVal = row.applicable || "Applicable";
+  const grade = isApplicableYesValue(appVal) ? computeRowGradePercent(row) : null;
+  const levelPick = row.levelOfImportance || "";
+  const valueLookup = row.valueMonthPerformance;
+  const serviceLookup = row.serviceCategory;
+  const idNum =
+    typeof createdId === "number" && Number.isFinite(createdId)
+      ? createdId
+      : parseInt(String(createdId), 10);
+  const lookupId = Number.isFinite(idNum) ? idNum : createdId;
+  const rowLabel = row.recordName || "Row";
+  const payload = {
+    [LN.recordName]: rowLabel,
+    [LN.displayNameField]: rowLabel,
+    [LN.entrance2]: row.maqam == null || row.maqam === "" ? 0 : safeNumber(row.maqam),
+    [LN.entrance1]: safeNumber(row.typography),
+    [LN.applicable]: picklistValueFromLabel(appVal, PICKLIST_ID_MAP.applicable),
+    [LN.valueMonthPerformance]: lookupObjectFromResolvedValue(
+      valueLookup,
+      resolveValueAchievedLookupId
+    ),
+    [LN.gradeCredited]: grade != null ? grade : 0,
+    [LN.requiredData]: row.requiredData || "",
+    [LN.source]: row.source || "",
+    [LN.objective]: row.objective || "",
+    [LN.indexMeasurementFormula]: row.indexMeasurementFormula || "",
+    [LN.description]: row.description || "",
+    [LN.levelOfImportance]: picklistValueFromLabel(levelPick, PICKLIST_ID_MAP.levelOfImportance),
+    [LN.indicator]: row.indicator || "",
+    [LN.serviceCategory]: lookupObjectFromResolvedValue(
+      serviceLookup,
+      resolveServiceCategoryLookupId
+    ),
+    [LN.performanceId]: row.performanceId || ""
+  };
+  if (includeKpiLookup && lookupId != null) payload[LN.kpiLookup] = { id: lookupId };
+  return payload;
+}
+
+/** Merge optional subform form ids for facilioCreateRecord (same pattern as master). */
+function buildChildCreateRecordData(moduleLinkName, row, createdId, includeKpiLookup) {
+  const data = childPayloadFromServiceRow(moduleLinkName, row, createdId, includeKpiLookup !== false);
+  const fid = KPI_SUBFORM_FORM_ID_BY_MODULE[moduleLinkName];
+  if (fid != null && fid !== "") {
+    return { formId: fid, actionFormId: fid, ...data };
+  }
+  return data;
+}
+
+function buildMinimalChildCreateRecordData(moduleLinkName, row, createdId, includeKpiLookup) {
+  const LN = serviceFieldLinkNames(moduleLinkName);
+  const appVal = row.applicable || "Applicable";
+  const grade = isApplicableYesValue(appVal) ? computeRowGradePercent(row) : null;
+  const idNum =
+    typeof createdId === "number" && Number.isFinite(createdId)
+      ? createdId
+      : parseInt(String(createdId), 10);
+  const lookupId = Number.isFinite(idNum) ? idNum : createdId;
+  const rowLabel = row.recordName || "Row";
+  const minimal = {
+    [LN.recordName]: rowLabel,
+    [LN.displayNameField]: rowLabel,
+    [LN.entrance2]: row.maqam == null || row.maqam === "" ? 0 : safeNumber(row.maqam),
+    [LN.entrance1]: safeNumber(row.typography),
+    [LN.applicable]: picklistValueFromLabel(appVal, PICKLIST_ID_MAP.applicable),
+    [LN.gradeCredited]: grade != null ? grade : 0,
+    [LN.performanceId]: row.performanceId || ""
+  };
+  if (includeKpiLookup && lookupId != null) minimal[LN.kpiLookup] = { id: lookupId };
+  const fid = KPI_SUBFORM_FORM_ID_BY_MODULE[moduleLinkName];
+  if (fid != null && fid !== "") {
+    return { formId: fid, actionFormId: fid, ...minimal };
+  }
+  return minimal;
+}
+
+function mapApiItemToRow(item) {
+  return {
+    id: item.id,
+    rawRecord: item,
+    recordName:
+      item.record_name_custom_kpiequations ??
+      item[createFormFieldLinkNames.displayName] ??
+      item.area_custom_kpiequations ??
+      "-",
+    dateRaw: item.date_month_custom_kpiequations,
+    date: formatDate(item.date_month_custom_kpiequations),
+    area: item.area_custom_kpiequations ?? "-",
+    contractor: item.contractor_custom_kpiequations ?? "-",
+    projectNumber: item.project_number_custom_kpiequations ?? "-",
+    performance: safeNumber(item[KPI_PERFORMANCE_INDICATOR_FIELD]),
+    light: listMetric(item, "light", "gradeAchieved"),
+    lightTarget: listMetric(item, "light", "weightPercent"),
+    op: listMetric(item, "operational", "gradeAchieved"),
+    opTarget: listMetric(item, "operational", "weightPercent"),
+    heavy: listMetric(item, "heavy", "gradeAchieved"),
+    heavyTarget: listMetric(item, "heavy", "weightPercent"),
+    contract: listMetric(item, "contract", "gradeAchieved"),
+    contractTarget: listMetric(item, "contract", "weightPercent"),
+    workOrder: item.work_order_custom_kpiequations
+  };
+}
+
+function clearValidationMarks() {
+  document.querySelectorAll(".field-error").forEach(el => el.classList.remove("field-error"));
+}
+
+function markMainFieldError(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (el) el.classList.add("field-error");
+}
+
+function markSubformFieldError(moduleLinkName, rowIndex, fieldKey) {
+  const spec = SUBFORM_UI_SPECS.find(s => s.moduleLinkName === moduleLinkName);
+  if (!spec) return;
+  const tbody = document.getElementById(spec.tbodyId);
+  if (!tbody) return;
+  const tr = tbody.querySelectorAll("tr")[rowIndex];
+  if (!tr) return;
+  const target = tr.querySelector(`[data-field="${fieldKey}"]`);
+  if (target) target.classList.add("field-error");
+}
+
+function showToast(message) {
+  const host = document.getElementById("appToastHost");
+  if (!host) return;
+  const toast = document.createElement("div");
+  toast.className = "app-toast";
+  toast.textContent = message;
+  host.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 4200);
+}
+
+function validateServiceSubformsBeforeSubmit() {
+  const errors = [];
+  const refs = [];
+  const dateIn = document.getElementById("createFormDateMonth")?.value?.trim() || "";
+  if (!dateIn) {
+    errors.push("KPI Equations: Date / Month is required.");
+    refs.push({ type: "main", id: "createFormDateMonth" });
+  }
+  SUBFORM_UI_SPECS.forEach(spec => {
+    const mod = spec.moduleLinkName;
+    if (SKIP_CHILD_MODULE_CREATE.has(mod)) return;
+    (createServiceSubRows[mod] || []).forEach((row, i) => {
+      if (!isApplicableYesValue(row.applicable)) return;
+      const n2 = row.maqam;
+      if (n2 == null || String(n2).trim() === "" || safeNumber(n2) <= 0) {
+        errors.push(
+          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Entrance No. 2 (Maqam) must be > 0 when Applicable.`
+        );
+        refs.push({ type: "sub", module: mod, index: i, field: "maqam" });
+      }
+      const n1 = row.typography;
+      if (n1 == null || String(n1).trim() === "" || safeNumber(n1) <= 0) {
+        errors.push(
+          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Entrance No. 1 (Typography) is required (> 0) when Applicable.`
+        );
+        refs.push({ type: "sub", module: mod, index: i, field: "typography" });
+      }
+      const req = row.requiredData == null ? "" : String(row.requiredData).trim();
+      if (!req) {
+        errors.push(
+          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Required Data is mandatory when Applicable.`
+        );
+        refs.push({ type: "sub", module: mod, index: i, field: "requiredData" });
+      }
+    });
+  });
+  return { errors, refs };
+}
+
+/**
+ * Connected-app style create: { data: { ...fields }, moduleName: "<linkName>" } (see reference quote payload).
+ * `path` is e.g. /v3/modules/custom_kpiequations — moduleName is the last segment.
+ */
+async function invokeFacilioPostModule(path, record) {
+  const api = window.facilioApp.request.invokeFacilioAPI.bind(window.facilioApp.request);
+  const modKey = path.replace(/^.*\//, "");
+  const bodies = [
+    JSON.stringify({ data: record, moduleName: modKey }),
+    JSON.stringify({ data: record }),
+    JSON.stringify({ [modKey]: record })
+  ];
+  let lastErr = null;
+  for (const body of bodies) {
+    try {
+      const res = await api(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+      });
+      const errObj = res?.data?.error || res?.error;
+      if (errObj) {
+        lastErr = new Error(typeof errObj === "string" ? errObj : JSON.stringify(errObj));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error("POST failed after alternate body shapes");
+}
+
+function extractCreatedIdFromLegacyPost(res, moduleLinkName) {
+  const d = res?.data !== undefined ? res.data : res;
+  return (
+    res?.[moduleLinkName]?.id ??
+    d?.[moduleLinkName]?.id ??
+    d?.id ??
+    d?.data?.id ??
+    d?.data?.[0]?.id ??
+    res?.id
+  );
+}
+
+/**
+ * Official SDK createRecord first (respects app user permissions); REST POST fallback.
+ * @see https://facilio.com/developers/docs/connected-apps/sdk-reference/api/
+ */
+async function facilioCreateRecord(moduleLinkName, data) {
+  const apiLayer = window.facilioApp?.api;
+  if (typeof apiLayer?.createRecord === "function") {
+    try {
+      const res = await apiLayer.createRecord(moduleLinkName, { data });
+      if (res?.error) {
+        const err = res.error;
+        throw new Error(typeof err === "string" ? err : err.message || JSON.stringify(err));
+      }
+      if (res?.code != null && res.code !== 0) {
+        throw new Error(`Facilio createRecord failed (code ${res.code})`);
+      }
+      const created = res[moduleLinkName];
+      if (!created || created.id == null) {
+        console.warn("createRecord response:", res);
+        throw new Error("createRecord returned no record id");
+      }
+      return { raw: res, id: created.id, record: created };
+    } catch (sdkErr) {
+      if (!window.facilioApp?.request?.invokeFacilioAPI) throw sdkErr;
+      console.warn(`createRecord(${moduleLinkName}) failed; trying REST create`, sdkErr);
+    }
+  }
+  if (!window.facilioApp?.request?.invokeFacilioAPI) {
+    throw new Error("Facilio SDK: no api.createRecord or request.invokeFacilioAPI");
+  }
+  const res = await invokeFacilioPostModule(`/v3/modules/${moduleLinkName}`, data);
+  const id = extractCreatedIdFromLegacyPost(res, moduleLinkName);
+  if (id == null) {
+    console.warn("Legacy POST response (no id):", res);
+    throw new Error("Create failed or unknown response shape");
+  }
+  return { raw: res, id, record: null };
+}
+
+function isBadRequestError(err) {
+  const s = String(err?.message || err || "").toLowerCase();
+  return s.includes("400") || s.includes("bad request");
+}
+
+async function createChildRecordWithRetry(moduleLinkName, row, createdId, includeKpiLookup) {
+  const fullData = buildChildCreateRecordData(moduleLinkName, row, createdId, includeKpiLookup);
+  try {
+    return await facilioCreateRecord(moduleLinkName, fullData);
+  } catch (err) {
+    if (!isBadRequestError(err)) throw err;
+    const minimalData = buildMinimalChildCreateRecordData(
+      moduleLinkName,
+      row,
+      createdId,
+      includeKpiLookup
+    );
+    return facilioCreateRecord(moduleLinkName, minimalData);
+  }
+}
+
+async function submitCreateKpiForm(ev) {
+  ev.preventDefault();
+  if (!window.facilioApp?.api?.createRecord && !window.facilioApp?.request?.invokeFacilioAPI) {
+    console.warn("Facilio SDK not ready");
+    closeCreateKpiModal();
+    return;
+  }
+
+  clearValidationMarks();
+  const { errors, refs } = validateServiceSubformsBeforeSubmit();
+  if (errors.length) {
+    refs.forEach(ref => {
+      if (ref.type === "main") {
+        markMainFieldError(ref.id);
+      } else {
+        markSubformFieldError(ref.module, ref.index, ref.field);
+      }
+    });
+    showToast(errors[0]);
+    return;
+  }
+
+  const submitBtn = document.querySelector("#createKpiForm button[type='submit']");
+  const cancelBtn = document.querySelector("#createKpiForm .create-form-actions .btn-secondary");
+
+  const dateStr = document.getElementById("createFormDateMonth").value;
+  const dateMs = dateStr ? new Date(dateStr).getTime() : null;
+  const nameFromForm = document.getElementById("createFormName").value.trim();
+  const masterNameForCreate = nameFromForm || formatKpiMonthYearLabel(dateMs);
+
+  const record = {
+    formId: KPI_MASTER_FORM_ID,
+    actionFormId: KPI_MASTER_FORM_ID,
+    [createFormFieldLinkNames.name]: masterNameForCreate,
+    [createFormFieldLinkNames.dateMonth]: dateMs,
+    [createFormFieldLinkNames.area]: document.getElementById("createFormArea").value,
+    [createFormFieldLinkNames.contractor]: document.getElementById("createFormContractor").value,
+    [createFormFieldLinkNames.workOrder]: document.getElementById("createFormWorkOrder").value,
+    [createFormFieldLinkNames.projectNumber]: document.getElementById("createFormProjectNumber").value,
+    [createFormFieldLinkNames.lightAverage]: safeNumber(document.getElementById("createFormLightAverage").value),
+    [createFormFieldLinkNames.lightSize]: safeNumber(document.getElementById("createFormLightSize").value)
+  };
+
+  setCreateFormOverlay(true, "Saving KPI…");
+  if (cancelBtn) cancelBtn.disabled = true;
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    await refreshLookupOptionCaches();
+    const createdChildren = [];
+    for (const spec of SUBFORM_UI_SPECS) {
+      const mod = spec.moduleLinkName;
+      if (SKIP_CHILD_MODULE_CREATE.has(mod)) continue;
+      for (const row of createServiceSubRows[mod] || []) {
+        let child;
+        try {
+          child = await createChildRecordWithRetry(mod, row, null, false);
+        } catch (e) {
+          const hint = row?.performanceId ? ` (${row.performanceId})` : "";
+          throw new Error(
+            `Child save failed in ${spec.title}${hint}: ${e?.message || String(e)}`
+          );
+        }
+        createdChildren.push({ module: mod, id: child.id });
+      }
+    }
+
+    const parent = await facilioCreateRecord(KPI_MASTER_MODULE_NAME, record);
+    const parentId = parent.id;
+
+    const masterLabel = formatKpiRecordName(dateMs, parentId);
+    try {
+      await facilioUpdateRecord(KPI_MASTER_MODULE_NAME, parentId, {
+        [createFormFieldLinkNames.name]: masterLabel,
+        [createFormFieldLinkNames.displayName]: masterLabel
+      });
+    } catch (e) {
+      console.warn("Master name dual-field update failed, retrying record_name only", e);
+      await facilioUpdateRecord(KPI_MASTER_MODULE_NAME, parentId, {
+        [createFormFieldLinkNames.name]: masterLabel
+      });
+    }
+
+    for (const child of createdChildren) {
+      await patchChildKpiLinkAndDisplayName(child.module, child.id, parentId, dateMs);
+    }
+
+    closeCreateKpiModal();
+    await refreshKpiListData();
+    showToast("KPI saved.");
+  } catch (err) {
+    console.error(err);
+    const m = err?.message || String(err);
+    showToast(`Save failed: ${m}`);
+  } finally {
+    setCreateFormOverlay(false, "");
+    if (cancelBtn) cancelBtn.disabled = false;
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+/* INIT */
+document.addEventListener("DOMContentLoaded", function () {
+  const loadList = () =>
+    refreshKpiListData().catch(err => {
+      console.error(err);
+      showToast("Could not load KPI records.");
+    });
+
+  if (USE_STATIC_PROTOTYPE_LIST) {
+    loadList();
+  }
+
+  try {
+    window.facilioApp = FacilioAppSDK.init();
+    window.facilioApp.on('app.loaded', () => {
+      refreshLookupOptionCaches().catch(() => {});
+      if (!USE_STATIC_PROTOTYPE_LIST) {
+        loadList();
+      }
+    });
+  } catch (err) {
+    console.warn("Facilio SDK init skipped", err);
+    if (!USE_STATIC_PROTOTYPE_LIST) {
+      loadList();
+    }
+  }
+
+});
+</script>
+
+<!-- 🔥 CREATE KPI (full screen) -->
+<div id="createKpiModal" class="summary-modal">
+  <div class="summary-container create-form-shell">
+    <div id="createFormBusyOverlay" class="create-form-busy-overlay" aria-hidden="true">
+      <div class="create-form-spinner" aria-hidden="true"></div>
+      <div id="createFormBusyLabel" class="create-form-busy-label">Saving…</div>
+    </div>
+    <div class="create-page-layout">
+      <aside class="create-left-rail">
+        <div class="create-rail-title">Navigation</div>
+        <button type="button" class="create-rail-item active" data-tab="main" onclick="createFormActivateRailTab('main')">KPI Equations</button>
+        <button type="button" class="create-rail-item" data-tab="light" onclick="createFormActivateRailTab('light')">Light Services</button>
+        <button type="button" class="create-rail-item" data-tab="heavy" onclick="createFormActivateRailTab('heavy')">Heavy Services</button>
+        <button type="button" class="create-rail-item" data-tab="contract" onclick="createFormActivateRailTab('contract')">Contract Mgmt</button>
+        <button type="button" class="create-rail-item" data-tab="operational" onclick="createFormActivateRailTab('operational')">Operational</button>
+      </aside>
+
+      <section class="create-main">
+        <div class="create-main-top">
+          <div class="create-main-top-title">New record</div>
+          <select class="create-layout-select" aria-label="Layout">
+            <option>Standard</option>
+          </select>
+        </div>
+
+        <form id="createKpiForm" class="create-main-form" onsubmit="submitCreateKpiForm(event)">
+          <div class="create-main-body" id="createMainScroll">
+            <div id="createSectionMain" class="create-form-section">
+            <div class="create-fields-card">
+
+            <div class="create-form-field">
+              <label for="createFormName">Name</label>
+              <input type="text" id="createFormName" name="name" placeholder="Enter your text here" autocomplete="off" oninput="if (event.isTrusted) createFormNameLockedByUser = true; this.classList.remove('field-error')" />
+            </div>
+
+            <div class="facilio-form-grid-2">
+              <div class="create-form-field">
+                <label for="createFormDateMonth">Date / Month</label>
+                <input type="datetime-local" id="createFormDateMonth" onchange="syncCreateFormNameFromDateArea()" />
+              </div>
+              <div class="create-form-field">
+                <label for="createFormArea">Area</label>
+                <input type="text" id="createFormArea" disabled />
+              </div>
+            </div>
+
+            <div class="create-form-field">
+              <label for="createFormContractor">Contractor</label>
+              <input type="text" id="createFormContractor" disabled />
+            </div>
+
+            <div class="facilio-form-grid-2">
+              <div class="create-form-field">
+                <label for="createFormLightAverage">Light Average</label>
+                <input type="number" id="createFormLightAverage" placeholder="Enter decimal value" />
+              </div>
+              <div class="create-form-field">
+                <label for="createFormLightSize">Light Size</label>
+                <input type="number" id="createFormLightSize" placeholder="Input numerical value" />
+              </div>
+            </div>
+
+            <div class="facilio-form-grid-2">
+              <div class="create-form-field">
+                <label for="createFormWorkOrder">Work Order</label>
+                <input type="text" id="createFormWorkOrder" disabled />
+              </div>
+              <div class="create-form-field">
+                <label for="createFormProjectNumber">Project Number</label>
+                <input type="text" id="createFormProjectNumber" disabled />
+              </div>
+            </div>
+
+            </div>
+            </div>
+
+            <div id="createSectionLight" class="create-section-split">
+            <div class="facilio-sub-title">Light Services</div>
+            <div class="subform-wrap">
+              <table class="subform-table">
+                <thead>
+                  <tr>
+                    <th>Grade %</th>
+                    <th>Entrance No. 2 (Maqam)</th>
+                    <th class="subform-th-required">Entrance No. 1 (Typography)</th>
+                    <th>Value achieved in the current month Performance</th>
+                    <th>Required Data</th>
+                    <th>Source</th>
+                    <th>Objective</th>
+                    <th>Index Measurement Formula</th>
+                    <th>Description</th>
+                    <th>Level of Importance</th>
+                    <th>Indicator</th>
+                    <th>Service Category</th>
+                    <th>Performance ID</th>
+                    <th class="subform-th-required">Applicable / Not Applicable</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="lightSubformBody"></tbody>
+              </table>
+            </div>
+            <div class="subform-actions">
+              <button type="button" class="subform-add-btn" onclick="addServiceSubRow('custom_lightservices')">+ Add Row</button>
+            </div>
+            </div>
+
+            <div id="createSectionHeavy" class="create-section-split">
+            <div class="facilio-sub-title">Heavy Services</div>
+            <div class="subform-wrap">
+              <table class="subform-table">
+                <thead>
+                  <tr>
+                    <th>Grade %</th>
+                    <th>Entrance No. 2 (Maqam)</th>
+                    <th class="subform-th-required">Entrance No. 1 (Typography)</th>
+                    <th>Value achieved in the current month Performance</th>
+                    <th>Required Data</th>
+                    <th>Source</th>
+                    <th>Objective</th>
+                    <th>Index Measurement Formula</th>
+                    <th>Description</th>
+                    <th>Level of Importance</th>
+                    <th>Indicator</th>
+                    <th>Service Category</th>
+                    <th>Performance ID</th>
+                    <th class="subform-th-required">Applicable / Not Applicable</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="heavySubformBody"></tbody>
+              </table>
+            </div>
+            <div class="subform-actions">
+              <button type="button" class="subform-add-btn" onclick="addServiceSubRow('custom_heavyservices')">+ Add Row</button>
+            </div>
+            </div>
+
+            <div id="createSectionContract" class="create-section-split">
+            <div class="facilio-sub-title">Contract Management Services</div>
+            <div class="subform-wrap">
+              <table class="subform-table">
+                <thead>
+                  <tr>
+                    <th>Grade %</th>
+                    <th>Entrance No. 2 (Maqam)</th>
+                    <th class="subform-th-required">Entrance No. 1 (Typography)</th>
+                    <th>Value achieved in the current month Performance</th>
+                    <th>Required Data</th>
+                    <th>Source</th>
+                    <th>Objective</th>
+                    <th>Index Measurement Formula</th>
+                    <th>Description</th>
+                    <th>Level of Importance</th>
+                    <th>Indicator</th>
+                    <th>Service Category</th>
+                    <th>Performance ID</th>
+                    <th class="subform-th-required">Applicable / Not Applicable</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="contractSubformBody"></tbody>
+              </table>
+            </div>
+            <div class="subform-actions">
+              <button type="button" class="subform-add-btn" onclick="addServiceSubRow('custom_contractmanagement')">+ Add Row</button>
+            </div>
+            </div>
+
+            <div id="createSectionOperational" class="create-section-split">
+            <div class="facilio-sub-title">Operational Services</div>
+            <div class="subform-wrap">
+              <table class="subform-table">
+                <thead>
+                  <tr>
+                    <th>Grade %</th>
+                    <th>Entrance No. 2 (Maqam)</th>
+                    <th class="subform-th-required">Entrance No. 1 (Typography)</th>
+                    <th>Value achieved in the current month Performance</th>
+                    <th>Required Data</th>
+                    <th>Source</th>
+                    <th>Objective</th>
+                    <th>Index Measurement Formula</th>
+                    <th>Description</th>
+                    <th>Level of Importance</th>
+                    <th>Indicator</th>
+                    <th>Service Category</th>
+                    <th>Performance ID</th>
+                    <th class="subform-th-required">Applicable / Not Applicable</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="operationalSubformBody"></tbody>
+              </table>
+            </div>
+            <div class="subform-actions">
+              <button type="button" class="subform-add-btn" onclick="addServiceSubRow('custom_operationalperformanceindicator')">+ Add Row</button>
+            </div>
+            </div>
+          </div>
+
+          <div class="create-main-footer create-form-actions">
+            <button type="button" class="btn-secondary" onclick="closeCreateKpiModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Submit Details</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="appToastHost" aria-live="polite" aria-atomic="true"></div>
+
+<!-- 🔥 SUMMARY MODAL -->
+<div id="summaryModal" class="summary-modal">
+  <div class="summary-container">
+
+  <div class="summary-header">
+    <div class="summary-header-left">
+      <div class="summary-back-btn" onclick="closeSummary()">← Back</div>
+      <div class="summary-header-title">
+        <div id="summaryRecordId" class="summary-header-title-main">#-</div>
+        <div id="summaryRecordName" class="summary-header-title-sub">-</div>
+        <div id="summaryHeaderMonthDate" class="summary-header-title-meta">KPI Summary View</div>
+      </div>
+    </div>
+    <div class="summary-header-right">
+      <button type="button" class="btn-primary" onclick="void exportSummaryToExcel().catch(e => console.error(e))">Download</button>
+    </div>
+  </div>
+
+  <!-- KPI CARD -->
+  <div class="summary-kpi-card">
+    <div class="summary-main-left">
+      <div class="summary-meta-grid">
+        <div class="summary-meta-item">
+          <span class="summary-meta-label">Contractor:</span>
+          <span id="summaryMetaContractor" class="summary-meta-value">-</span>
+        </div>
+        <div class="summary-meta-item">
+          <span class="summary-meta-label">Area:</span>
+          <span id="summaryMetaArea" class="summary-meta-value">-</span>
+        </div>
+        <div class="summary-meta-item">
+          <span class="summary-meta-label">Work Order:</span>
+          <span id="summaryMetaWorkOrder" class="summary-meta-value">-</span>
+        </div>
+        <div class="summary-meta-item">
+          <span class="summary-meta-label">Project Number:</span>
+          <span id="summaryMetaProjectNumber" class="summary-meta-value">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-main-right">
+      <div id="summaryPerformanceBox" class="summary-performance-box">
+        <div class="summary-performance-label">Performance Indicator</div>
+        <h2 id="summaryPerformanceValue" class="summary-performance-value">86.67%</h2>
+        <span id="summaryPerformanceBand" class="summary-performance-badge">Medium</span>
+      </div>
+      <div class="summary-performance-keymap">
+        <div class="summary-keymap-row">
+          <span class="summary-keymap-dot" style="background:#22c55e;"></span>
+          <span>95% and up - Excellent</span>
+        </div>
+        <div class="summary-keymap-row">
+          <span class="summary-keymap-dot" style="background:#f59e0b;"></span>
+          <span>85% - 94.99% - Medium</span>
+        </div>
+        <div class="summary-keymap-row">
+          <span class="summary-keymap-dot" style="background:#f43f5e;"></span>
+          <span>Under 84.99% - Weak</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="summary-table-card">
+    
+    <div class="summary-table-head">
+      <div>Service Category Code</div>
+      <div>Service Category Offered</div>
+      <div>Weight (%)</div>
+      <div>Total Grade Achieved (%)</div>
+      <div>Equation Result</div>
+    </div>
+
+    <div id="summaryTable"></div>
+
+  </div>
+
+  <div id="summarySubmodulesHost" class="summary-submodules-wrap"></div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
