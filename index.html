@@ -1077,6 +1077,18 @@ body {
   line-height: 1.2;
 }
 
+.subform-table .subform-maqam-readonly {
+  display: inline-block;
+  min-width: 4.5rem;
+  padding: 9px 10px;
+  font-size: 14px;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+
 .field-error {
   border: 1px solid #ef4444 !important;
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
@@ -1360,7 +1372,7 @@ function buildStaticPrototypeSummarySubmoduleRowsByModule() {
         id: `${moduleLinkName}-${idx + 1}`,
         [F.recordName]: row.recordName || row.performanceId || `Row ${idx + 1}`,
         [F.displayNameField]: row.recordName || row.performanceId || `Row ${idx + 1}`,
-        [F.gradeCredited]: grade != null ? grade : safeNumber(row.seedGrade),
+        [F.gradeCredited]: grade != null ? grade : null,
         [F.entrance1]: row.typography,
         [F.entrance2]: row.maqam,
         [F.valueMonthPerformance]: row.valueMonthPerformance,
@@ -1552,18 +1564,14 @@ let createServiceSubRows = {
 };
 
 /*
-  Prefill from KPI worksheets (example / equations columns ignored).
-  Entrance No. 2 (Maqam) = default denominator (n02), prefilled from sheet.
-  Entrance No. 1 (Typography) = user-entered numerator (n01); starts empty.
-  See MAQAM_DEFAULT_BY_PERFORMANCE_ID when sheet Maqam ≠ stored typography column.
+  Prototype: Entrance No. 2 (Maqam) is prefilled from MAQAM_DEFAULT_BY_PERFORMANCE_ID (read-only).
+  Entrance No. 1 (Typography) is user-entered and validated when Applicable.
 */
 const SERVICE_SEED_ROWS = {
   custom_lightservices: [
     {
       performanceId: "SS.1",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 94,
-      typography: 320,
       valueMonthPerformance: "% نسبة الامتثال",
       requiredData: "تقرير زيارة وتقييم اعمال النظافة من استشاري الاشراف",
       source: "نطاق العمل البند 4.2 والبند 4.5",
@@ -1580,8 +1588,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.2",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 342,
       valueMonthPerformance: "نسبة التنفيذ=%",
       requiredData: "بيان سجل النظام لاعمال النظافة",
       source: "نطاق العمل البند 4.2",
@@ -1597,8 +1603,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.3",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 29,
       valueMonthPerformance: "نسبة التنفيذ=%",
       requiredData: "تقرير عدم توفر الدخول للمبنى",
       source: "نطاق العمل البند 4.6 الرقم 1",
@@ -1615,8 +1619,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.4",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "نسبة التنفيذ=%",
       requiredData: "خطة الاعمال لمكافحة الافات والرش",
       source:
@@ -1634,8 +1636,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.5",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "نسبة التنفيذ=%",
       requiredData: "خطة الاعمال لغسيل الخزانات",
       source:
@@ -1653,8 +1653,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.6",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "% نسبة الامتثال",
       requiredData: "بيان تحديد مواقع التغطية بالمباني من مزود الخدمة الوطني",
       source: "نطاق العمل البند 4.9 الرقم 1 والجدول 4.1 وجدول 1",
@@ -1671,8 +1669,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.7",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "% نسبة الامتثال",
       requiredData: "بيان تحديد مواقع التغطية بالمباني من مزود الخدمة الوطني",
       source: "نطاق العمل البند 4.10 الرقم 1 والجدول 4.2 والبند 1.4 وجدول 1",
@@ -1689,8 +1685,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.8",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 0,
-      typography: 0,
       valueMonthPerformance:
         "% نسبة التنفيذ = قياس المؤشر بناء على الجدول الموضح في الخطة الشاملة",
       requiredData: "# المباني بها مساحات خضراء بالشهر السابق",
@@ -1707,8 +1701,6 @@ const SERVICE_SEED_ROWS = {
     {
       performanceId: "SS.9",
       equation: "eq=(Entrance No. 1 (Typography) / Entrance No. 2 (Maqam) )",
-      gradeCredited: 100,
-      typography: 35,
       valueMonthPerformance: "نسبة التنفيذ=%",
       requiredData: "# المباني بها مساحات خضراء بالشهر السابق",
       source: "نطاق العمل البند 4.11",
@@ -1727,8 +1719,6 @@ const SERVICE_SEED_ROWS = {
   custom_operationalperformanceindicator: [
     {
       performanceId: "OM.1",
-      gradeCredited: 100,
-      typography: 0,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Quality Assurance Consultant Report and Supervision Consultant Report",
@@ -1745,8 +1735,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "OM.2",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "Implementation Rate = %",
       requiredData:
         "Supervisory consultant's report on the number of unexecuted works and the total required works",
@@ -1761,8 +1749,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "OM.3",
-      gradeCredited: 100,
-      typography: 2,
       valueMonthPerformance: "Availability Rate = %",
       requiredData: "Report of the Records Management Supervision Consultant",
       source: "Scope of Work 1.21",
@@ -1777,8 +1763,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "OM.4",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData: "Statement of Regulations for the Register of Guarantees",
       source: "Scope of Action Item No. 1.20",
@@ -1795,8 +1779,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "OM.5",
-      gradeCredited: 57,
-      typography: 1500,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Accreditation Report of the Supervision Consultant for the Number of Matching Certificates",
@@ -1815,8 +1797,6 @@ const SERVICE_SEED_ROWS = {
   custom_heavyservices: [
     {
       performanceId: "HS.1",
-      gradeCredited: 100,
-      typography: 873,
       valueMonthPerformance: "Implementation Rate = %",
       requiredData: "System Record Statement for Preventive Maintenance",
       source: "Scope of work Clause .No 3.3.1",
@@ -1832,8 +1812,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.2",
-      gradeCredited: 32.03,
-      typography: 1129,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData: "Monthly System Log",
       source: "Scope of work for all SLAs",
@@ -1848,8 +1826,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.3",
-      gradeCredited: 49.43,
-      typography: 357,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
@@ -1868,8 +1844,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.4",
-      gradeCredited: 72.1,
-      typography: 197,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
@@ -1888,8 +1862,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.5",
-      gradeCredited: 100,
-      typography: 63,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
@@ -1908,8 +1880,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.6",
-      gradeCredited: 100,
-      typography: 172,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Operational Inspection Report, Post Test Report and Supervision Consultancy Review Report",
@@ -1928,8 +1898,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.7",
-      gradeCredited: 21.88,
-      typography: 25,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Scope of work Regulation on 3.3, No. 1 Regulation on 5.3 No. 2 and 2.2",
@@ -1946,8 +1914,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.8",
-      gradeCredited: 20.54,
-      typography: 561,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData:
         "Scope of work Regulation No. 1 3.3 and Regulation No. 2 5.3 Regulation and 2.2 Table 28",
@@ -1964,8 +1930,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.9",
-      gradeCredited: 66.71,
-      typography: 235,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData: "Scope of work Clause No 3.3 1",
       source: "Supervisory Consulting Review Report",
@@ -1980,8 +1944,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "HS.10",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "Compliance Rate = %",
       requiredData: "Scope of work Regulation on 3.3 No. 3 and Table 29",
       source: "Supervisory Consulting Review Report",
@@ -1999,8 +1961,6 @@ const SERVICE_SEED_ROWS = {
   custom_contractmanagement: [
     {
       performanceId: "CM.1",
-      gradeCredited: 100,
-      typography: 1713,
       valueMonthPerformance: "Match Percentage = %",
       requiredData: "Manpower Distribution Table No. 6 Daily Attendance Schedule",
       source: "Scope of Work Item 2.1 Point 5 and Item 1.17",
@@ -2015,8 +1975,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.2",
-      gradeCredited: 100,
-      typography: 16,
       valueMonthPerformance: "Output Submission Rate = %",
       requiredData: "Data and plans required by date",
       source: "Scope of Action Item Table 1 1.4",
@@ -2031,8 +1989,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.3",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "Implementation Rate = %",
       requiredData:
         "Buildings for water # supply # Buildings for sewage waste sweeping # Buildings for installing # spare parts # Buildings for repair works",
@@ -2049,8 +2005,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.4",
-      gradeCredited: 100,
-      typography: 1,
       valueMonthPerformance: "Case Processing Rate = %",
       requiredData:
         "Emergency Report for All Cases #Registered Emergencies # Expired Cases, RCA Report",
@@ -2066,8 +2020,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.5",
-      gradeCredited: 100,
-      typography: 100,
       valueMonthPerformance: "Survey Result = %",
       requiredData: "Report of the results of the previous survey",
       source: "Scope of Action Item No. 1.22.1",
@@ -2082,8 +2034,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.6",
-      gradeCredited: 100,
-      typography: 100,
       valueMonthPerformance: "Star rating score = %",
       requiredData: "Previous Star Rating Score",
       source: "Scope of Action Item No. 1.22.1",
@@ -2098,8 +2048,6 @@ const SERVICE_SEED_ROWS = {
     },
     {
       performanceId: "CM.7",
-      gradeCredited: 100,
-      typography: 12,
       valueMonthPerformance: "Compliance Percentage = %",
       requiredData:
         "Statement of Accreditation of the Administrative Staff and Advisory Report of the Supervision of the Availability of All Specializations",
@@ -2125,27 +2073,50 @@ function normalizeApplicablePicklist(v) {
   return s;
 }
 
-/* Sheet “Entrance No. 2 (Maqam)” differs from stored `typography` key in seed → set explicit Maqam default */
+/**
+ * Entrance No. 2 (Maqam) — prefilled per row (read-only in UI). Values from worksheet / contract defaults.
+ */
 const MAQAM_DEFAULT_BY_PERFORMANCE_ID = {
   "SS.1": 342,
+  "SS.2": 342,
+  "SS.3": 29,
+  "SS.4": 1,
+  "SS.5": 1,
+  "SS.6": 1,
+  "SS.7": 1,
+  "SS.8": 1,
+  "SS.9": 35,
   "OM.1": 1,
+  "OM.2": 1,
+  "OM.3": 2,
+  "OM.4": 1,
   "OM.5": 2631,
-  "CM.2": 25,
+  "HS.1": 873,
   "HS.2": 3525,
   "HS.3": 706,
   "HS.4": 706,
+  "HS.5": 63,
+  "HS.6": 172,
   "HS.7": 32,
   "HS.8": 706,
-  "HS.9": 706
+  "HS.9": 706,
+  "HS.10": 1,
+  "CM.1": 1713,
+  "CM.2": 25,
+  "CM.3": 1,
+  "CM.4": 1,
+  "CM.5": 100,
+  "CM.6": 100,
+  "CM.7": 12
 };
 
 function defaultMaqamFromSeed(partial) {
+  if (partial.maqam != null && partial.maqam !== "") return safeNumber(partial.maqam);
   const pid = partial.performanceId;
   if (pid && MAQAM_DEFAULT_BY_PERFORMANCE_ID[pid] != null) {
     return safeNumber(MAQAM_DEFAULT_BY_PERFORMANCE_ID[pid]);
   }
-  if (partial.maqam != null) return safeNumber(partial.maqam);
-  return safeNumber(partial.typography);
+  return 1;
 }
 
 function rowFromSeed(partial) {
@@ -2155,7 +2126,6 @@ function rowFromSeed(partial) {
     id: Date.now() + Math.floor(Math.random() * 1e6),
     recordName: partial.performanceId || "Row",
     maqam: defaultMaqamFromSeed(partial),
-    /* Testing: preload Entrance No. 1 from sheet data shared earlier. */
     typography: seedNo1,
     seedGrade: partial.gradeCredited == null ? null : safeNumber(partial.gradeCredited),
     equation: partial.equation || "",
@@ -2510,7 +2480,7 @@ function isApplicableYesValue(raw) {
 /**
  * Grade % (3 dp) = n01 ÷ n02 × 100
  * n01 = Entrance No. 1 (Typography) — user input
- * n02 = Entrance No. 2 (Maqam) — prefilled default (editable if needed)
+ * n02 = Entrance No. 2 (Maqam) — prefilled, read-only in the form
  */
 function round3(num) {
   const n = Number(num);
@@ -4144,8 +4114,8 @@ function renderServiceSubformRows(moduleLinkName) {
     body.innerHTML += `
       <tr>
         <td><span id="subform-grade-${m}-${index}" class="subform-cell-inner subform-grade-readonly">${gStr}</span></td>
-        <td><span class="subform-cell-inner"><input data-field="maqam" type="number" step="any" name="maqam" value="${maqamInputValue(row)}" placeholder="Entrance No. 2 (Maqam)" autocomplete="off" oninput="updateSubformMaqamTypo('${m}',${index},this)" /></span></td>
-        <td><span class="subform-cell-inner"><input data-field="typography" type="number" step="any" name="typography" value="${typoInputValue(row)}" placeholder="Entrance No. 1 (Typography)" autocomplete="off" oninput="updateSubformMaqamTypo('${m}',${index},this)" /></span></td>
+        <td><span class="subform-cell-inner"><span class="subform-maqam-readonly" title="Prefilled — not editable">${escapeHtmlText(maqamInputValue(row) || "—")}</span></span></td>
+        <td><span class="subform-cell-inner"><input data-field="typography" type="number" step="any" name="typography" value="${typoInputValue(row)}" placeholder="Entrance No. 1 (Typography)" autocomplete="off" oninput="updateSubformTypography('${m}',${index},this)" /></span></td>
         <td><span class="subform-cell-inner"><input data-field="valueMonthPerformance" type="text" value="${vPerfStr}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'valueMonthPerformance',this.value)" /></span></td>
         <td><span class="subform-cell-inner"><input data-field="requiredData" type="text" value="${escapeHtmlText(row.requiredData)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'requiredData',this.value)" /></span></td>
         <td><span class="subform-cell-inner"><input type="text" value="${escapeHtmlText(row.source)}" autocomplete="off" oninput="updateSubformTextField('${m}',${index},'source',this.value)" /></span></td>
@@ -4175,19 +4145,13 @@ function renderServiceSubformRows(moduleLinkName) {
   });
 }
 
-function updateSubformMaqamTypo(moduleLinkName, index, inputEl) {
+function updateSubformTypography(moduleLinkName, index, inputEl) {
   const rows = createServiceSubRows[moduleLinkName];
   if (!rows || !rows[index]) return;
   inputEl.classList.remove("field-error");
-  const name = inputEl.getAttribute("name");
   const raw = inputEl.value;
-  if (name === "maqam") {
-    rows[index].maqam =
-      raw === "" || raw === "-" ? null : safeNumber(raw);
-  } else {
-    rows[index].typography =
-      raw === "" || raw === "-" ? null : safeNumber(raw);
-  }
+  rows[index].typography =
+    raw === "" || raw === "-" ? null : safeNumber(raw);
   rows[index].gradeCredited = computeRowGradePercent(rows[index]);
   const cell = document.getElementById(`subform-grade-${moduleLinkName}-${index}`);
   if (cell) cell.textContent = formatGradeCell(rows[index].gradeCredited);
@@ -4399,17 +4363,10 @@ function validateServiceSubformsBeforeSubmit() {
     if (SKIP_CHILD_MODULE_CREATE.has(mod)) return;
     (createServiceSubRows[mod] || []).forEach((row, i) => {
       if (!isApplicableYesValue(row.applicable)) return;
-      const n2 = row.maqam;
-      if (n2 == null || String(n2).trim() === "" || safeNumber(n2) <= 0) {
-        errors.push(
-          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Entrance No. 2 (Maqam) must be > 0 when Applicable.`
-        );
-        refs.push({ type: "sub", module: mod, index: i, field: "maqam" });
-      }
       const n1 = row.typography;
-      if (n1 == null || String(n1).trim() === "" || safeNumber(n1) <= 0) {
+      if (n1 == null || String(n1).trim() === "") {
         errors.push(
-          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Entrance No. 1 (Typography) is required (> 0) when Applicable.`
+          `${spec.title}: row ${i + 1} (${row.performanceId || "—"}) — Entrance No. 1 (Typography) is required when Applicable.`
         );
         refs.push({ type: "sub", module: mod, index: i, field: "typography" });
       }
